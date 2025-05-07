@@ -2,6 +2,9 @@ using UnityEngine;
 using TMPro;
 using System;
 using UnityEngine.UI;
+using System.Collections.Generic;
+using System.Collections;
+
 
 
 public class UIManager : MonoBehaviour
@@ -26,7 +29,15 @@ public class UIManager : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button retryButton;
     [SerializeField] private Button startGameButton;
+    [Header("Upgrade Debug Panel")]
+    [SerializeField] private GameObject upgradeDebugPanel;
+    [SerializeField] private TextMeshProUGUI upgradeDebugText;  
+    [SerializeField] private GameObject buyPhasePanel;
+    [SerializeField] private TextMeshProUGUI upgradeConfirmText;
 
+
+    private List<GameObject> previouslyActivePanels = new();
+    private bool isDebugViewActive = false;
 
 
     public static UIManager Instance { get; private set; }
@@ -41,7 +52,46 @@ public class UIManager : MonoBehaviour
 
         Instance = this;
     }
+ 
+    public void UpdateUpgradeDebugPanel()
+    {
+        if (upgradeDebugPanel == null || upgradeDebugText == null)
+            return;
 
+        upgradeDebugPanel.SetActive(true); // Ensure it's visible when updating
+
+        string upgrades = "Upgrades:\n";
+        foreach (var upg in UpgradeManager.Instance.GetAvailableUpgrades())
+        {
+            int count = UpgradeManager.Instance.GetUpgradeCount(upg.type);
+            if (count > 0)
+                upgrades += $"- {upg.upgradeName} ({count})\n";
+        }
+
+        upgrades += "\nStats:\n";
+        upgrades += $"- Attempts Left: {GameManager.Instance.GetPlayerAttemptsRemaining()}\n";
+        upgrades += $"- Multiplier: x{RewardManager.Instance.GetMultiplier()}\n";
+        upgrades += $"- Cash: ${RewardManager.Instance.GetCurrentCash()}\n";
+        upgrades += "\nProbabilities:\n";
+        upgrades += $"- % Heads Chance: {UpgradeEffects.GetChanceToLandHeads()}%\n";
+        upgrades += $"- % Tails Chance: {UpgradeEffects.GetChanceToLandTails()}%\n";
+        upgrades += $"- % Match Target: {UpgradeEffects.GetChanceToMatchExpected()}%\n";
+
+        upgradeDebugText.text = upgrades;
+    }
+
+    public void ShowBuyPhase()
+    {
+        buyPhasePanel.SetActive(true);
+    }
+
+    public void HideBuyPhaseAndContinue()
+    {
+        buyPhasePanel.SetActive(false);
+        GameManager.Instance.StartRound();  // resume game
+    }
+
+ 
     // ----- Flip Results -----
     public void ShowPlayerResult(string message)
     {
@@ -133,6 +183,73 @@ public class UIManager : MonoBehaviour
             onStart?.Invoke();
         });
     }
+
+    public void ToggleUpgradeDebugPanel()
+    {
+        if (upgradeDebugPanel == null) return;
+
+        isDebugViewActive = !isDebugViewActive;
+
+        if (isDebugViewActive)
+        {
+            // Hide all active sibling panels except the debug panel
+            previouslyActivePanels.Clear();
+
+            foreach (Transform child in upgradeDebugPanel.transform.parent)
+            {
+                GameObject panel = child.gameObject;
+
+                // Skip self and any inactive objects
+                if (panel == upgradeDebugPanel || !panel.activeSelf || panel.name == "StatsButton")
+                    continue;
+
+                previouslyActivePanels.Add(panel);
+                panel.SetActive(false);
+            }
+
+            upgradeDebugPanel.SetActive(true);
+            UpdateUpgradeDebugPanel();
+        }
+        else
+        {
+            // Restore previously hidden panels
+            foreach (var panel in previouslyActivePanels)
+            {
+                if (panel != null)
+                    panel.SetActive(true);
+            }
+
+            upgradeDebugPanel.SetActive(false);
+        }
+    }
+
+    public void ShowUpgradeConfirmation(string upgradeName)
+    {
+        if (upgradeConfirmText == null) return;
+
+        StopAllCoroutines(); // cancel any previous animations
+        upgradeConfirmText.text = $"{upgradeName} Purchased!";
+        upgradeConfirmText.alpha = 1f;
+        StartCoroutine(FadeOutText(upgradeConfirmText, 3f));
+    }
+
+    private IEnumerator FadeOutText(TextMeshProUGUI text, float duration)
+    {
+        float startAlpha = 1f;
+        float time = 0f;
+
+        while (time < duration)
+        {
+            float alpha = Mathf.Lerp(startAlpha, 0f, time / duration);
+            text.alpha = alpha;
+            time += Time.deltaTime;
+            yield return null;
+        }
+
+        text.alpha = 0f;
+    }
+
+
 
 
 }

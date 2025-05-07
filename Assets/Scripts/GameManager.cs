@@ -188,8 +188,15 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.EndRound;
         Debug.Log($"Round {currentRound} Complete.");
-        currentRound++;
+        
+        if (currentRound == 1)
+        {
+            Debug.Log("Buy Phase triggered after round 1.");
+            UIManager.Instance.ShowBuyPhase();
+            return; // Skip auto-starting next round for now
+        }
 
+        currentRound++;
         StartCoroutine(NextRoundDelay(2f));
     }
 

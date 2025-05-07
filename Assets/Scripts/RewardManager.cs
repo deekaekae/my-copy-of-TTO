@@ -99,4 +99,25 @@ public class RewardManager : MonoBehaviour
 
         uiManager.UpdateRewardUI(true, totalCash, multiplier);
     }
+
+    public bool SpendCash(int amount)
+    {
+        if (totalCash >= amount)
+        {
+            totalCash -= amount;
+            uiManager.UpdateRewardUI(true, totalCash, multiplier);
+            Debug.Log($"[RewardManager] Spent ${amount}. Remaining: ${totalCash}");
+            return true;
+        }
+
+        Debug.LogWarning("[RewardManager] Not enough cash to spend.");
+        return false;
+    }
+
+    public bool CanAfford(int amount)
+    {
+        return totalCash >= amount;
+    }
+
+
 }

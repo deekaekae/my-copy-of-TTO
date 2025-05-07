@@ -25,7 +25,7 @@ public class AIController : MonoBehaviour
 
     private IEnumerator AIDelayFlip()
     {
-        yield return new WaitForSeconds(4f); // Give camera time
+        yield return new WaitForSeconds(1.5f); // Give camera time
 
         // Check if round is still valid
         if (!isTurnActive || GameManager.Instance == null || currentCoin == null)

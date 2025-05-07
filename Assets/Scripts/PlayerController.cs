@@ -119,7 +119,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator DelayEndPlayerTurn()
     {
-        yield return new WaitForSeconds(3.5f);  // Adjust timing for drama or animation
+        yield return new WaitForSeconds(1f);  // Adjust timing for drama or animation
         EndTurn(true);  // Trigger AI’s turn after delay
     }
 
