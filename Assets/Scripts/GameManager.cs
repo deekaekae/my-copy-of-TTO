@@ -12,7 +12,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerController player;
     [SerializeField] private AIController ai;
     [SerializeField] private UIManager uiManager;
-    [SerializeField] private CameraRigController cameraRig;  // 👈 Camera rig reference
+    [SerializeField] private CameraRigController cameraRig; 
+    [SerializeField] private GameObject announcerCoin;
+
 
     private List<bool> targetSequence = new List<bool>();
     private List<GameObject> currentCoins = new List<GameObject>();
@@ -109,19 +111,26 @@ public class GameManager : MonoBehaviour
 
         playerTurnComplete = false;
         aiTurnComplete = false;
-
+        //test
         bool nextCall = targetSequence[currentCoinIndex];
         StartCoroutine(AnnounceAndWait(nextCall));
 
-        GameObject newCoin = coinSpawner.SpawnSingleCoin();
-        currentCoins.Add(newCoin);
+        GameObject playerCoin = coinSpawner.SpawnPlayerCoin();
+        GameObject aiCoin = coinSpawner.SpawnAICoin();
 
-        CoinClickTarget clickTarget = newCoin.GetComponent<CoinClickTarget>();
+        currentCoins.Add(playerCoin);
+        currentCoins.Add(aiCoin);
+
+        player.SetCurrentCoin(playerCoin);
+        ai.SetCurrentCoin(aiCoin);
+
+        cameraRig.SetPlayerLookTarget(playerCoin.transform);
+        cameraRig.SetAILookTarget(aiCoin.transform);
+
+        CoinClickTarget clickTarget = playerCoin.GetComponent<CoinClickTarget>();
         if (clickTarget != null)
             clickTarget.SetActive(true);
-
-        player.SetCurrentCoin(newCoin);
-        ai.SetCurrentCoin(newCoin);
+        
 
         currentState = GameState.Announce;
         //COME BACK HERE AFTER ANIMATION TO ADJUST INTRO TIME 
@@ -234,9 +243,28 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator AnnounceAndWait(bool call)
     {
-        yield return new WaitForSeconds(5f); // pause on announcer
+        cameraRig.MoveToAnnouncer();
+        //test
+        yield return new WaitForSeconds(1f); // brief pause
+
         announcer.Announce(call);
-        yield return new WaitForSeconds(3.5f); // let the flip play out later
+
+        // Flip the announcer's coin with animation
+        if (announcerCoin != null)
+        {
+            var flipper = announcerCoin.GetComponent<CoinFlipper>();
+            if (flipper != null)
+            {
+                flipper.ResetState();  // optional safety
+                flipper.Flip(call);    // animate with correct result
+            }
+            else
+            {
+                Debug.LogWarning("Announcer coin is missing CoinFlipper.");
+            }
+        }
+
+        yield return new WaitForSeconds(3.5f); // wait for animation to finish
     }
 
 }

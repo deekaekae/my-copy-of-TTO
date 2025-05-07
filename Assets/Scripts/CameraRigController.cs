@@ -56,4 +56,15 @@ public class CameraRigController : MonoBehaviour
         currentRigPosition = aiPosition;
         currentLookTarget = aiLookTarget;
     }
+
+    public void SetPlayerLookTarget(Transform target)
+    {
+        playerLookTarget = target;
+    }
+
+    public void SetAILookTarget(Transform target)
+    {
+        aiLookTarget = target;
+    }
+
 }

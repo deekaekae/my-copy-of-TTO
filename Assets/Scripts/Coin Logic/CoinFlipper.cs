@@ -5,32 +5,6 @@ using System;
 public class CoinFlipper : MonoBehaviour
 {
     public event Action<bool> OnFlipComplete; // true = heads, false = tails
-
-    // DONT FORGET TO UN Comment, use other flip() for testing
-
-    /*
-    public void Flip()
-    {
-        
-        bool result = UnityEngine.Random.value < 0.5f;
-        Debug.Log("Coin flipped: " + (result ? "HEADS" : "TAILS"));
-
-        // Optional: Trigger animation or camera here later
-        // StartCoroutine(PlayFlipAnimation(result));
-
-        // Immediately return result (can delay if animated later)
-        OnFlipComplete?.Invoke(result);
-    }
-
-    // Optional animation stub for future use
-    /*
-    private IEnumerator PlayFlipAnimation(bool result)
-    {
-        // TODO: Play animation or trigger camera
-        yield return new WaitForSeconds(1f);
-        OnFlipComplete?.Invoke(result);
-    }
-    */
     private bool isFlipping = false;
 
     public void ResetState()
@@ -49,39 +23,29 @@ public class CoinFlipper : MonoBehaviour
 
         isFlipping = true;
 
-        bool result;
-        if (overrideResult.HasValue)
+        bool result = overrideResult ?? UnityEngine.Random.value < 0.5f;
+        Debug.Log($"{gameObject.name} Flip result: {(result ? "HEADS" : "TAILS")}");
+
+        // Trigger CoinFlip animation
+        CoinFlip anim = GetComponent<CoinFlip>();
+        if (anim != null)
         {
-            result = overrideResult.Value;
-            Debug.Log("DEBUG: Forced " + (result ? "HEADS" : "TAILS"));
+            anim.isHeads = result;
+            anim.flip = true;
         }
         else
         {
-            result = UnityEngine.Random.value < 0.5f;
-            Debug.Log("Coin flipped: " + (result ? "HEADS" : "TAILS"));
+            Debug.LogWarning($"{gameObject.name} has no CoinFlip component attached.");
         }
 
-        if (OnFlipComplete == null)
-        {
-            Debug.LogWarning($"{gameObject.name}: No flip listeners found. This flip will not trigger any logic.");
-        }
-        else
-        {
-            OnFlipComplete.Invoke(result);
-        }
-
-        Debug.Log("Flip() called with override: " + (overrideResult.HasValue ? overrideResult.ToString() : "none"));
-        Debug.Log($"{gameObject.name} was flipped by {(overrideResult.HasValue ? "DEBUG KEY" : "RUNTIME")} at frame {Time.frameCount}");
-
-        StartCoroutine(ResetFlipLock());
+        StartCoroutine(FinishFlipAfterAnimation(result));
     }
 
-
-    private IEnumerator ResetFlipLock()
+    private IEnumerator FinishFlipAfterAnimation(bool result)
     {
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(3.5f); // Adjust if animation timing changes
+        OnFlipComplete?.Invoke(result);
         isFlipping = false;
     }
-
 }
 
