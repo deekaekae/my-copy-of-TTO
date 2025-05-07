@@ -1,78 +1,151 @@
-
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class UpgradeEffects
 {
-    public static void ApplyTiltHeads(ref bool result)
+    public static void ApplyAllEffects(ref bool expected, int flipIndex)
     {
-        if (!Has(Upgrade.UpgradeType.Tilt)) return;
-
-        float biasChance = 0.7f; // 70% chance to force heads
-        result = UnityEngine.Random.value < biasChance ? true : false;
-        Debug.Log("[UpgradeEffects] TiltHeads applied. Result is now: " + result);
-    }
-
-    public static void ApplyTiltTails(ref bool result)
-    {
-        if (!Has(Upgrade.UpgradeType.Tilt)) return;
-
-        float biasChance = 0.7f; // 70% chance to force tails
-        result = UnityEngine.Random.value < biasChance ? false : true;
-        Debug.Log("[UpgradeEffects] TiltTails applied. Result is now: " + result);
-    }
-
-    public static void ApplyDoubleReward(ref int reward)
-    {
-        if (Has(Upgrade.UpgradeType.DoubleOrNothing))
+        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
         {
-            reward *= 2;
-            Debug.Log("[UpgradeEffects] Double or Nothing applied. New reward: " + reward);
-            UpgradeManager.Instance.UseOneTimeUpgrade(Upgrade.UpgradeType.DoubleOrNothing);
+            switch (upgrade.effectType)
+            {
+                case UpgradeEffectType.Tilt:
+                    ApplyTilt(ref expected, upgrade, flipIndex);
+                    break;
+
+                case UpgradeEffectType.Reward:
+                    ApplyRewardEffect(upgrade);
+                    break;
+
+                case UpgradeEffectType.Mercy:
+                    ApplyMercyEffect(upgrade);
+                    break;
+
+                case UpgradeEffectType.Sequence:
+                    ApplySequenceEffect(upgrade);
+                    break;
+            }
         }
     }
 
-    public static void ApplyStreakBoost(ref int multiplier)
+    private static void ApplyTilt(ref bool expected, Upgrade upgrade, int flipIndex)
     {
-        if (Has(Upgrade.UpgradeType.Streaks))
+        if (upgrade.category != UpgradeCategory.Passive) return;
+        if (upgrade.firstFlipOnly && flipIndex != 0) return;
+
+        bool biasApplies =
+            (expected && upgrade.affectsHeads) ||
+            (!expected && upgrade.affectsTails);
+
+        if (!biasApplies) return;
+
+        float chance = upgrade.effectStrength;
+        expected = Random.value < chance ? expected : !expected;
+
+        Debug.Log($"[UpgradeEffects] Tilt effect applied: {upgrade.name}");
+    }
+
+    private static void ApplyRewardEffect(Upgrade upgrade)
+    {
+        if (upgrade.category != UpgradeCategory.Passive) return;
+
+        switch (upgrade.upgradeName)
         {
-            multiplier += 1;
-            Debug.Log("[UpgradeEffects] Streaks bonus applied. Multiplier boosted to: " + multiplier);
+            case "Multiplier Boost":
+                int bonus = Mathf.RoundToInt(upgrade.effectStrength);
+                RewardManager.Instance.ApplyMultiplierBonus(bonus);
+                Debug.Log("[UpgradeEffects] Multiplier Boost applied");
+                break;
         }
     }
 
-    public static bool ShouldStunOpponent()
+    private static void ApplyMercyEffect(Upgrade upgrade)
     {
-        if (Has(Upgrade.UpgradeType.Stun))
+        if (upgrade.category != UpgradeCategory.Passive) return;
+
+        switch (upgrade.upgradeName)
         {
-            UpgradeManager.Instance.UseOneTimeUpgrade(Upgrade.UpgradeType.Stun);
-            Debug.Log("[UpgradeEffects] Stun activated!");
-            return true;
+            case "Extra Attempt":
+                GameManager.Instance.AddExtraAttempt(); // This method must exist in GameManager
+                Debug.Log("[UpgradeEffects] Extra Attempt granted");
+                break;
         }
-        return false;
     }
 
-    public static int GetMercyBonus()
+    private static void ApplySequenceEffect(Upgrade upgrade)
     {
-        return UpgradeManager.Instance.GetUpgradeCount(Upgrade.UpgradeType.Mercy);
+        Debug.Log($"[UpgradeEffects] Sequence effect triggered for: {upgrade.name}");
     }
 
-    private static bool Has(Upgrade.UpgradeType type)
+    // Optional for runtime effects
+    public static void ApplyOneTimeUseUpgrade(Upgrade upgrade)
     {
-        return UpgradeManager.Instance != null && UpgradeManager.Instance.HasUpgrade(type);
+        Debug.Log($"[UpgradeEffects] One-time upgrade used: {upgrade.name}");
+    }
+
+    // Optional helper if you want passive upgrades to influence calculations
+    
+    public static float GetTotalMultiplierBonus()
+    {
+        float total = 0f;
+        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
+        {
+            if (upgrade.effectType == UpgradeEffectType.Reward &&
+                upgrade.upgradeName == "Multiplier Boost" &&
+                upgrade.category == UpgradeCategory.Passive)
+            {
+                total += upgrade.effectStrength;
+            }
+        }
+        return total;
     }
 
     public static float GetChanceToLandHeads()
     {
-        return Has(Upgrade.UpgradeType.Tilt) ? 70f : 50f;
+        float baseChance = 50f;
+        float modifier = 0f;
+
+        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
+        {
+            if (upgrade.effectType == UpgradeEffectType.Tilt && upgrade.affectsHeads)
+            {
+                modifier += upgrade.effectStrength * 100f;
+            }
+        }
+
+        return Mathf.Clamp(baseChance + modifier, 0f, 100f);
     }
 
     public static float GetChanceToLandTails()
     {
-        return Has(Upgrade.UpgradeType.Tilt) ? 30f : 50f;
+        float baseChance = 50f;
+        float modifier = 0f;
+
+        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
+        {
+            if (upgrade.effectType == UpgradeEffectType.Tilt && upgrade.affectsTails)
+            {
+                modifier += upgrade.effectStrength * 100f;
+            }
+        }
+
+        return Mathf.Clamp(baseChance + modifier, 0f, 100f);
     }
 
     public static float GetChanceToMatchExpected()
     {
-        return Has(Upgrade.UpgradeType.Tilt) ? 65f : 50f;
+        float baseChance = 50f; // assuming neutral
+        float modifier = 0f;
+
+        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
+        {
+            if (upgrade.effectType == UpgradeEffectType.Tilt && upgrade.affectsMatchExpected)
+            {
+                modifier += upgrade.effectStrength * 100f;
+            }
+        }
+
+        return Mathf.Clamp(baseChance + modifier, 0f, 100f);
     }
+
 }

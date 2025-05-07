@@ -63,9 +63,10 @@ public class UIManager : MonoBehaviour
         string upgrades = "Upgrades:\n";
         foreach (var upg in UpgradeManager.Instance.GetAvailableUpgrades())
         {
-            int count = UpgradeManager.Instance.GetUpgradeCount(upg.type);
+            int count = UpgradeManager.Instance.GetUpgradeCount(upg.upgradeName);
             if (count > 0)
-                upgrades += $"- {upg.upgradeName} ({count})\n";
+                upgrades += $"- {upg.upgradeName} ({count}) [{upg.effectStrength * 100f}%]\n";
+
         }
 
         upgrades += "\nStats:\n";

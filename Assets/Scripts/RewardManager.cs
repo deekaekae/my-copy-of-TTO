@@ -118,6 +118,15 @@ public class RewardManager : MonoBehaviour
     {
         return totalCash >= amount;
     }
+    
+    public void ApplyMultiplierBonus(int amount)
+    {
+        multiplier += amount;
+        Debug.Log($"[RewardManager] Multiplier increased by {amount}. New multiplier: {multiplier}");
+            uiManager.UpdateRewardUI(true, totalCash, multiplier);
+
+    }
+
 
 
 }

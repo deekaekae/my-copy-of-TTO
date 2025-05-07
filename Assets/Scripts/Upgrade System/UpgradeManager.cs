@@ -8,7 +8,7 @@ public class UpgradeManager : MonoBehaviour
 
     [SerializeField] private List<Upgrade> availableUpgrades;
 
-    private Dictionary<Upgrade.UpgradeType, int> playerUpgrades = new();
+    private List<Upgrade> playerUpgrades = new();
 
     private void Awake()
     {
@@ -43,10 +43,18 @@ public class UpgradeManager : MonoBehaviour
         return availableUpgrades;
     }
 
-    public int GetUpgradeCount(Upgrade.UpgradeType type)
+    public int GetUpgradeCount(string upgradeName)
     {
-        return playerUpgrades.ContainsKey(type) ? playerUpgrades[type] : 0;
+        int count = 0;
+        foreach (var upgrade in playerUpgrades)
+        {
+            if (upgrade.upgradeName == upgradeName)
+                count++;
+        }
+        return count;
     }
+
+
 
     public bool TryPurchaseUpgrade(Upgrade upgrade)
     {
@@ -54,31 +62,44 @@ public class UpgradeManager : MonoBehaviour
         {
             RewardManager.Instance.SpendCash(upgrade.cost);
 
-            if (playerUpgrades.ContainsKey(upgrade.type))
-                playerUpgrades[upgrade.type]++;
-            else
-                playerUpgrades[upgrade.type] = 1;
+            playerUpgrades.Add(upgrade);
 
-            Debug.Log($"Purchased upgrade: {upgrade.upgradeName} (Now owns {playerUpgrades[upgrade.type]})");
+            int count = GetUpgradeCount(upgrade.upgradeName);
+           Debug.Log($"Purchased upgrade: {upgrade.upgradeName} (Now owns {count})");
             return true;
         }
         return false;
     }
 
-    public bool HasUpgrade(Upgrade.UpgradeType type)
+    public bool HasUpgradeNamed(string upgradeName)
     {
-        return playerUpgrades.ContainsKey(type) && playerUpgrades[type] > 0;
+        foreach (var upgrade in GetPlayerUpgrades())
+        {
+            if (upgrade.upgradeName == upgradeName)
+                return true;
+        }
+        return false;
     }
 
-    public void UseOneTimeUpgrade(Upgrade.UpgradeType type)
-    {
-        if (playerUpgrades.ContainsKey(type) && playerUpgrades[type] > 0)
-        {
-            playerUpgrades[type]--;
-            Debug.Log($"Used one-time upgrade: {type} (Remaining: {playerUpgrades[type]})");
 
-            if (playerUpgrades[type] <= 0)
-                playerUpgrades.Remove(type);
+    public void UseOneTimeUpgrade(string upgradeName)
+    {
+        for (int i = 0; i < playerUpgrades.Count; i++)
+        {
+            if (playerUpgrades[i].upgradeName == upgradeName &&
+                playerUpgrades[i].category == UpgradeCategory.OneTimeUse)
+            {
+                playerUpgrades.RemoveAt(i);
+                Debug.Log($"Used one-time upgrade: {upgradeName}");
+                return;
+            }
         }
     }
+
+    public List<Upgrade> GetPlayerUpgrades()
+    {
+        return playerUpgrades;
+    }
+
+
 }

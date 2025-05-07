@@ -149,6 +149,8 @@ public class GameManager : MonoBehaviour
         }
 
         bool expected = targetSequence[currentCoinIndex];
+        //this is tilt 
+        UpgradeEffects.ApplyAllEffects(ref expected, currentCoinIndex);
         currentState = GameState.PlayerTurn;
 
         cameraRig.MoveToPlayer();  // 👈 Move to player camera for turn
@@ -214,14 +216,35 @@ public class GameManager : MonoBehaviour
         UIManager.Instance?.ShowAttempts(playerAttemptsRemaining);
     }
 
+    public void AddExtraAttempt()
+    {
+        playerAttemptsRemaining++;
+        UIManager.Instance?.ShowAttempts(playerAttemptsRemaining);
+    }
+    
     public void ResetPlayerAttempts(int value = 2)
     {
         playerAttemptsRemaining = value;
+
+        // 🧠 Check for Mercy upgrades to increase attempts
+        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
+        {
+            if (upgrade.effectType == UpgradeEffectType.Mercy &&
+                upgrade.upgradeName == "Extra Attempt" &&
+                upgrade.category == UpgradeCategory.Passive)
+            {
+                int bonus = Mathf.RoundToInt(upgrade.effectStrength);
+                playerAttemptsRemaining += bonus;
+                Debug.Log($"[GameManager] Mercy upgrade added {bonus} extra attempt(s).");
+            }
+        }
+
         if (UIManager.Instance != null)
             UIManager.Instance.ShowAttempts(playerAttemptsRemaining);
         else
             Debug.LogWarning("UIManager.Instance was null when resetting attempts.");
     }
+
 
     private System.Collections.IEnumerator DelayedStartRound()
     {
@@ -273,5 +296,7 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(3.5f); // wait for animation to finish
     }
+    
+
 
 }
