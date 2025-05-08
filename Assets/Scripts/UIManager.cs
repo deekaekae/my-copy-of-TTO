@@ -50,6 +50,8 @@ public class UIManager : MonoBehaviour
     private bool isInventoryVisible = false;
 
     public static UIManager Instance { get; private set; }
+    public GameObject flipRewardPopupPrefab;
+    public Transform popupAnchor;
 
     private void Awake()
     {
@@ -348,6 +350,30 @@ public class UIManager : MonoBehaviour
         if (buyPhaseCashText != null)
             buyPhaseCashText.text = $"Cash: ${RewardManager.Instance.GetCurrentCash()}";
     }
+
+    
+    public void ShowFlipRewardPopup(int multiplier, int cash)
+    {
+        if (flipRewardPopupPrefab == null)
+        {
+            Debug.LogError("[UIManager] flipRewardPopupPrefab is null!");
+            return;
+        }
+
+        if (popupAnchor == null)
+        {
+            Debug.LogError("[UIManager] popupAnchor is null!");
+            return;
+        }
+
+        var popup = Instantiate(flipRewardPopupPrefab, popupAnchor);
+        var popupScript = popup.GetComponent<RewardPopup>();
+
+        string text = $"+${cash} X {multiplier}";
+        popupScript.SetText(text);
+    }
+
+    
 
 
 

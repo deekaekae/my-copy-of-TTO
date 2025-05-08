@@ -86,7 +86,7 @@ using System.Linq;
     }
 
 
-    private static void ApplyRewardEffect(Upgrade upgrade)
+    public static void ApplyRewardEffect(Upgrade upgrade)
     {
         if (!upgrade.affectsCash)
             return;
@@ -229,6 +229,12 @@ using System.Linq;
         }
 
         return Mathf.Clamp(baseChance + modifier, 0f, 100f);
+    }
+
+    public static void ClearQueuedOneTimeUpgrades()
+    {
+        queuedOneTimeUpgrades.Clear();
+        Debug.Log("[UpgradeEffects] Cleared queued OTU upgrades.");
     }
 
 }

@@ -22,7 +22,7 @@ MonoBehaviour:
   affectsHeads: 0
   affectsTails: 0
   firstFlipOnly: 0
-  rewardModifiesSuccess: 0
+  rewardModifiesSuccess: 1
   affectsMultiplier: 0
   successCashMultiplier: 2
   rewardModifiesFailure: 1

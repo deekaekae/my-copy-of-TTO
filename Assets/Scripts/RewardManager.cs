@@ -19,6 +19,8 @@ public class RewardManager : MonoBehaviour
     private bool rewardAlreadyGivenThisCoin = false;
 
     public event Action<int, int> OnRewardUpdated;
+    private int lastRewardAmount = 0;
+    public int GetLastRewardAmount() => lastRewardAmount;
 
     private void Awake()
     {
@@ -36,20 +38,16 @@ public class RewardManager : MonoBehaviour
         rewardAlreadyGivenThisCoin = true;
 
         currentStreak++;
-        
-        //OG non-compound logic
-        /*
         multiplier++;
-        int reward = baseCash * multiplier;
-        totalCash += reward;
-        */
 
-        multiplier++;
+        int before = totalCash;
         totalCash = (int)(MathF.Max(1, totalCash) * multiplier);
-        uiManager.UpdateRewardUI(true, totalCash, multiplier);
-        Debug.Log($"[DEBUG] Updated Player Cash: {totalCash}, Mult: x{multiplier}");
+        lastRewardAmount = totalCash - before; // ✅ Store the amount earned this flip
 
+        uiManager.UpdateRewardUI(true, totalCash, multiplier);
+        Debug.Log($"[DEBUG] Updated Player Cash: {totalCash}, Mult: x{multiplier}, Earned: ${lastRewardAmount}");
     }
+
 
     public void UpdateAIRewards()
     {
@@ -140,6 +138,7 @@ public class RewardManager : MonoBehaviour
         uiManager.UpdateRewardUI(true, totalCash, multiplier);
     }
 
+    
 
 
 

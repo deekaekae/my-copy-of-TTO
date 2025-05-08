@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using System.Linq;
 
 public class PlayerController : MonoBehaviour
 {
@@ -68,16 +69,28 @@ public class PlayerController : MonoBehaviour
         Debug.Log("Player flipped: " + (result ? "HEADS" : "TAILS") + (success ? " ✅" : " ❌"));
 
         GameManager.Instance.SetLastFlipMatched(success);
+        // Apply reward upgrades (Passive Income, Double Down, etc.)
+        var allRewardUpgrades = UpgradeManager.Instance.GetPlayerUpgrades().Concat(UpgradeEffects.GetQueuedOTUs()).Where(upg => upg.effectType == UpgradeEffectType.Reward);
+
+        foreach (var rewardUpgrade in allRewardUpgrades)
+        {
+            UpgradeEffects.ApplyRewardEffect(rewardUpgrade);
+        }
+        UpgradeEffects.ClearQueuedOneTimeUpgrades(); 
+
 
         if (success)
         {
             isTurnActive = false;
             RewardManager.Instance.UpdatePlayerRewards(); 
+            int earned = RewardManager.Instance.GetLastRewardAmount();
+            int mult = RewardManager.Instance.GetMultiplier();
+            UIManager.Instance.ShowFlipRewardPopup(mult, earned);
             StartCoroutine(DelayEndPlayerTurn());
         }
         else
         {
-            GameManager.Instance.UsePlayerAttempt();  // ✅ Only reduce attempt on failure
+            GameManager.Instance.UsePlayerAttempt();  //  Only reduce attempt on failure
             RewardManager.Instance.OnPlayerMissed();
 
             if (GameManager.Instance.GetPlayerAttemptsRemaining() > 0)
@@ -128,5 +141,8 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(1f);  // Adjust timing for drama or animation
         EndTurn(true);  // Trigger AI’s turn after delay
     }
+
+    
+
 
 }
