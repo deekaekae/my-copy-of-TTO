@@ -127,6 +127,21 @@ public class RewardManager : MonoBehaviour
 
     }
 
+    public void AddCash(int amount)
+    {
+        if (amount <= 0)
+        {
+            Debug.LogWarning($"[RewardManager] Tried to add non-positive cash: {amount}");
+            return;
+        }
+
+        totalCash += amount;
+        Debug.Log($"[RewardManager] Gained ${amount}. New total: ${totalCash}");
+        uiManager.UpdateRewardUI(true, totalCash, multiplier);
+    }
+
+
+
 
 
 }

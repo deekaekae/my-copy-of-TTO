@@ -29,16 +29,25 @@ public class UIManager : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button retryButton;
     [SerializeField] private Button startGameButton;
+    [SerializeField] private GameObject InventoryButton;
+    [SerializeField] private GameObject StatsButton;
     [Header("Upgrade Debug Panel")]
     [SerializeField] private GameObject upgradeDebugPanel;
     [SerializeField] private TextMeshProUGUI upgradeDebugText;  
     [SerializeField] private GameObject buyPhasePanel;
     [SerializeField] private TextMeshProUGUI upgradeConfirmText;
+    [Header("Inventory Panel")]
+    [SerializeField] private GameObject inventoryPanel;
+    [SerializeField] private GameObject otuButton; // one-time-use button prefab
+    [SerializeField] private Transform otuButtonContainer;
+
+    [SerializeField] private TextMeshProUGUI buyPhaseCashText;
+
 
 
     private List<GameObject> previouslyActivePanels = new();
     private bool isDebugViewActive = false;
-
+    private bool isInventoryVisible = false;
 
     public static UIManager Instance { get; private set; }
 
@@ -60,35 +69,60 @@ public class UIManager : MonoBehaviour
 
         upgradeDebugPanel.SetActive(true); // Ensure it's visible when updating
 
-        string upgrades = "Upgrades:\n";
+        string upgrades = "All Currently Owned Upgrades:\n";
         foreach (var upg in UpgradeManager.Instance.GetAvailableUpgrades())
         {
             int count = UpgradeManager.Instance.GetUpgradeCount(upg.upgradeName);
             if (count > 0)
                 upgrades += $"- {upg.upgradeName} ({count}) [{upg.effectStrength * 100f}%]\n";
-
         }
+
+        //INSERT QUEUED OTU DISPLAY HERE
+        var queuedOTUs = UpgradeEffects.GetQueuedOTUs();
+        if (queuedOTUs.Count > 0)
+        {
+            upgrades += "\nQueued OTU Upgrades:\n";
+            foreach (var queued in queuedOTUs)
+            {
+                upgrades += $"- {queued.upgradeName} [{queued.effectStrength * 100f}%]\n";
+            }
+        }
+        upgrades += "\nActive Passive Upgrades:\n";
+        foreach (var upg in UpgradeManager.Instance.GetPlayerUpgrades())
+        {
+            upgrades += $"- {upg.upgradeName} [{upg.effectStrength * 100f}%]\n";
+        }
+
+        
+
+        upgrades += "\nCurrent Turn Probabilities:\n";
+        upgrades += $"- % Heads Chance: {UpgradeEffects.GetChanceToLandHeads()}%\n";
+        upgrades += $"- % Tails Chance: {UpgradeEffects.GetChanceToLandTails()}%\n";
+        upgrades += $"- % Match Target: {UpgradeEffects.GetChanceToMatchExpected()}%\n";
 
         upgrades += "\nStats:\n";
         upgrades += $"- Attempts Left: {GameManager.Instance.GetPlayerAttemptsRemaining()}\n";
         upgrades += $"- Multiplier: x{RewardManager.Instance.GetMultiplier()}\n";
         upgrades += $"- Cash: ${RewardManager.Instance.GetCurrentCash()}\n";
-        upgrades += "\nProbabilities:\n";
-        upgrades += $"- % Heads Chance: {UpgradeEffects.GetChanceToLandHeads()}%\n";
-        upgrades += $"- % Tails Chance: {UpgradeEffects.GetChanceToLandTails()}%\n";
-        upgrades += $"- % Match Target: {UpgradeEffects.GetChanceToMatchExpected()}%\n";
+        
 
         upgradeDebugText.text = upgrades;
     }
 
+
     public void ShowBuyPhase()
     {
+        buyPhaseCashText.text = $"Cash: ${RewardManager.Instance.GetCurrentCash()}";
         buyPhasePanel.SetActive(true);
+        if (backgroundPanel != null)
+            backgroundPanel.SetActive(false);
     }
 
     public void HideBuyPhaseAndContinue()
     {
         buyPhasePanel.SetActive(false);
+        if (backgroundPanel != null)
+            backgroundPanel.SetActive(true);
         GameManager.Instance.StartRound();  // resume game
     }
 
@@ -181,6 +215,8 @@ public class UIManager : MonoBehaviour
         startGameButton.onClick.AddListener(() => {
             backgroundPanel.SetActive(true);
             gameStartPanel.SetActive(false);
+            StatsButton.SetActive(true);
+            InventoryButton.SetActive(true);
             onStart?.Invoke();
         });
     }
@@ -249,6 +285,72 @@ public class UIManager : MonoBehaviour
 
         text.alpha = 0f;
     }
+
+    private void ClearInventoryButtons()
+    {
+        foreach (Transform child in otuButtonContainer)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+    public void HideInventoryPanel()
+    {
+        inventoryPanel.SetActive(false);
+        isInventoryVisible = false;
+    }
+    public void ToggleInventoryPanel()
+    {
+        if (isInventoryVisible)
+        {
+            inventoryPanel.SetActive(false);
+            isInventoryVisible = false;
+            return;
+        }
+
+        inventoryPanel.SetActive(true);
+        isInventoryVisible = true;
+
+        RedrawInventoryPanel(); // 👈 call new redraw function
+    }
+
+
+    public void RedrawInventoryPanel()
+    {
+        ClearInventoryButtons();
+
+        var upgrades = UpgradeManager.Instance.GetOneTimeUseUpgrades();
+        foreach (var upgrade in upgrades)
+        {
+            GameObject btnObj = Instantiate(otuButton, otuButtonContainer);
+            var text = btnObj.GetComponentInChildren<TextMeshProUGUI>();
+            if (text != null)
+                text.text = upgrade.upgradeName;
+
+            var btn = btnObj.GetComponent<Button>();
+            if (btn != null)
+            {
+                var capturedUpgrade = upgrade;
+                btn.onClick.AddListener(() =>
+                {
+                    UpgradeEffects.ApplyOneTimeUseUpgrade(capturedUpgrade);
+                    UpgradeManager.Instance.UseOneTimeUpgrade(capturedUpgrade.upgradeName);
+                    UpdateUpgradeDebugPanel();
+                    upgradeDebugPanel.SetActive(false);
+
+                    // ✅ just refresh the inventory, don't close or reset it
+                    RedrawInventoryPanel();
+                });
+            }
+        }
+    }
+    public void UpdateBuyPhaseCashDisplay()
+    {
+        if (buyPhaseCashText != null)
+            buyPhaseCashText.text = $"Cash: ${RewardManager.Instance.GetCurrentCash()}";
+    }
+
+
+
 
 
 

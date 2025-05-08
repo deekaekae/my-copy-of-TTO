@@ -24,6 +24,9 @@ public class PlayerController : MonoBehaviour
             uiManager.ShowPlayerResult("Your turn. Match: " + (expected ? "HEADS" : "TAILS"));
         }
 
+        UIManager.Instance.ToggleInventoryPanel();
+
+
         Debug.Log("Your turn. Match: " + (expectedResult ? "HEADS" : "TAILS"));
         Debug.Log("Player Turn Started, waiting for input...");
     }
@@ -64,6 +67,8 @@ public class PlayerController : MonoBehaviour
         bool success = result == expectedResult;
         Debug.Log("Player flipped: " + (result ? "HEADS" : "TAILS") + (success ? " ✅" : " ❌"));
 
+        GameManager.Instance.SetLastFlipMatched(success);
+
         if (success)
         {
             isTurnActive = false;
@@ -91,6 +96,7 @@ public class PlayerController : MonoBehaviour
 
     private void EndTurn(bool success)
     {
+        UIManager.Instance.HideInventoryPanel();
         isTurnActive = false;
         GameManager.Instance.OnPlayerFinishedTurn(success);
     }

@@ -10,15 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e33fb4b9e0c3548cc9bcfd4618a66099, type: 3}
-  m_Name: TiltTails
+  m_Name: PassiveIncome
   m_EditorClassIdentifier: 
-  upgradeName: 'Tilt the Odds: Tails'
-  description: Use to tilt the odds in favor of a tails on  flip.
+  upgradeName: Passive Income
+  description: Gain $10 per flip, regardless of flip result.
   cost: 0
-  category: 1
-  effectType: 0
-  effectStrength: 0.1
+  category: 0
+  effectType: 1
+  effectStrength: 0
   affectsMatchExpected: 0
   affectsHeads: 0
-  affectsTails: 1
+  affectsTails: 0
   firstFlipOnly: 0
+  rewardModifiesSuccess: 0
+  affectsMultiplier: 0
+  successCashMultiplier: 1
+  rewardModifiesFailure: 0
+  failCashPenaltyPercent: 0
+  flatCashAmount: 10
+  affectsCash: 1

@@ -52,8 +52,12 @@ public class BuyPhaseUI : MonoBehaviour
                 btn.onClick.AddListener(() =>
                 {
                     bool success = UpgradeManager.Instance.TryPurchaseUpgrade(upgradeCopy);
-                    if (success)
+                    if (success){
                         UIManager.Instance.ShowUpgradeConfirmation(upgradeCopy.upgradeName);
+                        UIManager.Instance.UpdateBuyPhaseCashDisplay();
+                        UIManager.Instance.UpdateRewardUI(true, RewardManager.Instance.GetCurrentCash(), RewardManager.Instance.GetMultiplier());
+
+                    }
                 });
             }
         }

@@ -26,7 +26,8 @@ public class GameManager : MonoBehaviour
     private bool playerTurnComplete = false;
     private bool aiTurnComplete = false;
     private int playerAttemptsRemaining = 2;
-
+    
+    private bool lastFlipMatched; 
     public int GetPlayerAttemptsRemaining() => playerAttemptsRemaining;
 
     private enum GameState
@@ -221,7 +222,7 @@ public class GameManager : MonoBehaviour
         playerAttemptsRemaining++;
         UIManager.Instance?.ShowAttempts(playerAttemptsRemaining);
     }
-    
+
     public void ResetPlayerAttempts(int value = 2)
     {
         playerAttemptsRemaining = value;
@@ -296,6 +297,21 @@ public class GameManager : MonoBehaviour
 
         yield return new WaitForSeconds(3.5f); // wait for animation to finish
     }
+
+    public void SetLastFlipMatched(bool matched)
+    {
+        lastFlipMatched = matched;
+    }
+
+    public bool LastFlipMatched()
+    {
+        return lastFlipMatched;
+    }
+    public bool IsPlayerTurn()
+    {
+        return currentState == GameState.PlayerTurn;
+    }
+
     
 
 
