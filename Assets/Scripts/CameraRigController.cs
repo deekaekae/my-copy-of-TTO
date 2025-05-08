@@ -17,6 +17,12 @@ public class CameraRigController : MonoBehaviour
     private Transform currentLookTarget;
     private Camera mainCam;
 
+    [Header("Eye Control")]
+    public Transform[] eyeTransforms; // assign both eyes in the inspector
+    public float eyeLookSpeed = 5f;
+    public float maxEyeAngle = 30f;
+
+
     private void Start()
     {
         mainCam = Camera.main;
@@ -37,6 +43,34 @@ public class CameraRigController : MonoBehaviour
             Quaternion lookRotation = Quaternion.LookRotation(direction);
             mainCam.transform.rotation = Quaternion.Slerp(mainCam.transform.rotation, lookRotation, Time.deltaTime * lookSpeed);
         }
+
+        if (currentLookTarget != null && eyeTransforms != null)
+        {
+            foreach (var eye in eyeTransforms)
+            {
+                if (eye == null) continue;
+
+                Vector3 toTarget = currentLookTarget.position - eye.position;
+                Quaternion lookRotation = Quaternion.LookRotation(toTarget);
+
+                // Convert to local rotation relative to head
+                Quaternion localRotation = Quaternion.Inverse(eye.parent.rotation) * lookRotation;
+
+                // Limit rotation
+                localRotation = Quaternion.RotateTowards(
+                    Quaternion.identity,  // base eye forward
+                    localRotation,
+                    maxEyeAngle
+                );
+
+                eye.localRotation = Quaternion.Slerp(
+                    eye.localRotation,
+                    localRotation,
+                    Time.deltaTime * eyeLookSpeed
+                );
+            }
+        }
+
     }
 
     public void MoveToAnnouncer()
@@ -67,4 +101,5 @@ public class CameraRigController : MonoBehaviour
         aiLookTarget = target;
     }
 
+    
 }

@@ -40,7 +40,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject inventoryPanel;
     [SerializeField] private GameObject otuButton; // one-time-use button prefab
     [SerializeField] private Transform otuButtonContainer;
-
+    [SerializeField] private TextMeshProUGUI upgradeDescriptionText;
     [SerializeField] private TextMeshProUGUI buyPhaseCashText;
 
 
@@ -325,6 +325,10 @@ public class UIManager : MonoBehaviour
         {
             GameObject btnObj = Instantiate(otuButton, otuButtonContainer);
             var text = btnObj.GetComponentInChildren<TextMeshProUGUI>();
+            var hover = btnObj.GetComponent<UpgradeButtonHover>();
+            if (hover != null)
+                hover.upgradeData = upgrade;
+
             if (text != null)
                 text.text = upgrade.upgradeName;
 
@@ -339,7 +343,7 @@ public class UIManager : MonoBehaviour
                     UpdateUpgradeDebugPanel();
                     upgradeDebugPanel.SetActive(false);
 
-                    // ✅ just refresh the inventory, don't close or reset it
+                    //just refresh the inventory, don't close or reset it
                     RedrawInventoryPanel();
                 });
             }
@@ -373,7 +377,25 @@ public class UIManager : MonoBehaviour
         popupScript.SetText(text);
     }
 
-    
+    public void ShowUpgradeDescription(string description)
+    {
+        if (upgradeDescriptionText != null)
+        {
+            upgradeDescriptionText.text = description;
+            upgradeDescriptionText.gameObject.SetActive(true);
+        }
+    }
+
+    public void ClearUpgradeDescription()
+    {
+        if (upgradeDescriptionText != null)
+        {
+            upgradeDescriptionText.text = "";
+            upgradeDescriptionText.gameObject.SetActive(false);
+        }
+    }
+
+
 
 
 

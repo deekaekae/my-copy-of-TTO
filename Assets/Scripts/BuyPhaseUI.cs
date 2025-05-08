@@ -45,6 +45,11 @@ public class BuyPhaseUI : MonoBehaviour
 
             text.text = $"{upgrade.upgradeName} - ${upgrade.cost}";
 
+            //hover for description
+            var hover = btnObj.GetComponent<UpgradeButtonHover>();
+            if (hover != null)
+                hover.upgradeData = upgrade;
+
             Button btn = btnObj.GetComponent<Button>();
             if (btn != null)
             {

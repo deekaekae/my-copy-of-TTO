@@ -88,24 +88,30 @@ using System.Linq;
 
     public static void ApplyRewardEffect(Upgrade upgrade)
     {
-        if (!upgrade.affectsCash)
-            return;
+        if (upgrade == null) return;
 
         int currentCash = RewardManager.Instance.GetCurrentCash();
 
-        // Flat passive income
-        if (upgrade.flatCashAmount > 0 && upgrade.category == UpgradeCategory.Passive)
+        // Handle multiplier boost (even if not cash-related)
+        if (upgrade.affectsMultiplier)
         {
-            if (GameManager.Instance.IsPlayerTurn()) // ✅ Only apply if it's the player's turn
+            int multBoost = Mathf.RoundToInt(upgrade.effectStrength > 0 ? upgrade.effectStrength : 1);
+            RewardManager.Instance.ApplyMultiplierBonus(multBoost);
+            Debug.Log($"[UpgradeEffects] +{multBoost} multiplier from upgrade: {upgrade.upgradeName}");
+        }
+
+        // Flat passive income (passive upgrades only)
+        if (upgrade.affectsCash && upgrade.flatCashAmount > 0 && upgrade.category == UpgradeCategory.Passive)
+        {
+            if (GameManager.Instance.IsPlayerTurn())
             {
                 RewardManager.Instance.AddCash(upgrade.flatCashAmount);
                 Debug.Log($"[UpgradeEffects] Passive Income: +${upgrade.flatCashAmount}");
             }
-            return;
         }
 
         // Percent-based success/fail logic
-        if (upgrade.rewardModifiesSuccess || upgrade.rewardModifiesFailure)
+        if (upgrade.affectsCash && (upgrade.rewardModifiesSuccess || upgrade.rewardModifiesFailure))
         {
             bool matched = GameManager.Instance.LastFlipMatched();
 
@@ -124,6 +130,7 @@ using System.Linq;
             }
         }
     }
+
 
 
 

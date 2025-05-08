@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 9096298506421375000}
   - component: {fileID: 7025785020647997626}
   - component: {fileID: 2125872621588018970}
+  - component: {fileID: -1051095302327345005}
   m_Layer: 5
   m_Name: OTUButton
   m_TagString: Untagged
@@ -276,3 +277,16 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &-1051095302327345005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5051078008223975055}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7532f99f9a7214cd681f24f71df0f975, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  upgradeData: {fileID: 0}
