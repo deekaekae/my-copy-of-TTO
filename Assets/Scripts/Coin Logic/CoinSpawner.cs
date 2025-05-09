@@ -13,6 +13,8 @@ public class CoinSpawner : MonoBehaviour
 
     private List<GameObject> activeCoins = new List<GameObject>();
 
+    private int movedCoinCount = 0;
+
     public void ClearCoins()
     {
         foreach (var coin in activeCoins)
@@ -22,12 +24,24 @@ public class CoinSpawner : MonoBehaviour
         activeCoins.Clear();
     }
 
-    public void MoveCoinAside(GameObject coin)
+   public void MoveCoinAside(GameObject coin)
     {
-        int usedIndex = activeCoins.IndexOf(coin);
-        float offset = (usedIndex - 0.5f) * .75f;
-        coin.transform.position = new Vector3(coin.transform.position.x + offset, coin.transform.position.y, coin.transform.position.z + 2f);
+        float spacing = .6f;
+        float xOffset = movedCoinCount * spacing;
+
+        Vector3 newPosition = new Vector3(
+            playerSpawnPoint.position.x + xOffset,
+            playerSpawnPoint.position.y,
+            playerSpawnPoint.position.z + 2f
+        );
+
+        coin.transform.position = newPosition;
+
+        movedCoinCount++;
     }
+
+
+
 
     public GameObject SpawnSingleCoin()
     {
@@ -50,4 +64,10 @@ public class CoinSpawner : MonoBehaviour
         activeCoins.Add(coin);
         return coin;
     }
+
+    public void ResetCoinLayout()
+    {
+        movedCoinCount = 0;
+    }
+
 }

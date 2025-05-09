@@ -18,6 +18,8 @@ public class GameManager : MonoBehaviour
 
     private List<bool> targetSequence = new List<bool>();
     private List<GameObject> currentCoins = new List<GameObject>();
+    private List<GameObject> playerCoinsThisRound = new();
+
 
     private int currentRound = 1;
     private int coinsPerRound;
@@ -26,6 +28,8 @@ public class GameManager : MonoBehaviour
     private bool playerTurnComplete = false;
     private bool aiTurnComplete = false;
     private int playerAttemptsRemaining = 2;
+    private int playerFlipCount = 0;
+
     
     private bool lastFlipMatched; 
     public int GetPlayerAttemptsRemaining() => playerAttemptsRemaining;
@@ -83,7 +87,14 @@ public class GameManager : MonoBehaviour
 
     public void StartRound()
     {
+        //tracking for putting round coins aside
+        coinSpawner.ResetCoinLayout();
         currentCoinIndex = 0;
+
+        playerCoinsThisRound.Clear();
+        playerFlipCount = 0;
+        
+
         coinsPerRound = currentRound;
         targetSequence = GenerateSequence(coinsPerRound);
 
@@ -116,11 +127,17 @@ public class GameManager : MonoBehaviour
         bool nextCall = targetSequence[currentCoinIndex];
         StartCoroutine(AnnounceAndWait(nextCall));
 
-        GameObject playerCoin = coinSpawner.SpawnPlayerCoin();
-        GameObject aiCoin = coinSpawner.SpawnAICoin();
+        // If there's a previous coin, move it aside BEFORE spawning a new one
+       if (playerCoinsThisRound.Count > 0)
+        {
+            GameObject lastPlayerCoin = playerCoinsThisRound[playerCoinsThisRound.Count - 1];
+            coinSpawner.MoveCoinAside(lastPlayerCoin);
+        }
 
+        GameObject playerCoin = coinSpawner.SpawnPlayerCoin();
+        playerCoinsThisRound.Add(playerCoin);
+        GameObject aiCoin = coinSpawner.SpawnAICoin();
         currentCoins.Add(playerCoin);
-        currentCoins.Add(aiCoin);
 
         player.SetCurrentCoin(playerCoin);
         ai.SetCurrentCoin(aiCoin);
@@ -176,31 +193,29 @@ public class GameManager : MonoBehaviour
     {
         if (playerTurnComplete && aiTurnComplete)
         {
-            coinSpawner.MoveCoinAside(currentCoins[currentCoinIndex]);
+            // Move the current coin BEFORE incrementing the index
+            GameObject completedCoin = currentCoins[currentCoinIndex];
+            coinSpawner.MoveCoinAside(completedCoin);
 
-            CoinClickTarget clickTarget = currentCoins[currentCoinIndex].GetComponent<CoinClickTarget>();
+            // Disable its click target
+            CoinClickTarget clickTarget = completedCoin.GetComponent<CoinClickTarget>();
             if (clickTarget != null)
                 clickTarget.SetActive(false);
 
+            // Now advance to next coin
             currentCoinIndex++;
             ProceedToNextCoin();
         }
     }
 
+
     private void EndRound()
     {
         currentState = GameState.EndRound;
         Debug.Log($"Round {currentRound} Complete.");
-        
-        if (currentRound == 1)
-        {
-            Debug.Log("Buy Phase triggered after round 1.");
-            UIManager.Instance.ShowBuyPhase();
-            return; // Skip auto-starting next round for now
-        }
 
-        currentRound++;
-        StartCoroutine(NextRoundDelay(2f));
+        UIManager.Instance.ShowBuyPhase();
+        currentRound++; 
     }
 
     private System.Collections.IEnumerator NextRoundDelay(float delay)

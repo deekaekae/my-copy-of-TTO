@@ -34,7 +34,6 @@ public class RewardManager : MonoBehaviour
 
     public void UpdatePlayerRewards()
     {
-        if (rewardAlreadyGivenThisCoin) return;
         rewardAlreadyGivenThisCoin = true;
 
         currentStreak++;
@@ -73,9 +72,6 @@ public class RewardManager : MonoBehaviour
         rewardAlreadyGivenThisCoin = false;
     }
 
-    public int GetCurrentCash() => totalCash;
-    public int GetMultiplier() => multiplier;
-
     public void OnPlayerMissed()
     {
         Debug.Log("[DEBUG] Streak broken. Resetting multiplier and scaling cash loss.");
@@ -111,11 +107,6 @@ public class RewardManager : MonoBehaviour
         Debug.LogWarning("[RewardManager] Not enough cash to spend.");
         return false;
     }
-
-    public bool CanAfford(int amount)
-    {
-        return totalCash >= amount;
-    }
     
     public void ApplyMultiplierBonus(int amount)
     {
@@ -138,6 +129,12 @@ public class RewardManager : MonoBehaviour
         uiManager.UpdateRewardUI(true, totalCash, multiplier);
     }
 
+    public int GetCurrentCash() => totalCash;
+    public int GetMultiplier() => multiplier;
+    public bool CanAfford(int amount)
+    {
+        return totalCash >= amount;
+    }
     
 
 

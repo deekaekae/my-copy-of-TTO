@@ -373,7 +373,7 @@ public class UIManager : MonoBehaviour
         var popup = Instantiate(flipRewardPopupPrefab, popupAnchor);
         var popupScript = popup.GetComponent<RewardPopup>();
 
-        string text = $"+${cash} X {multiplier}";
+        string text = $"+${cash} +1 MULT!!";
         popupScript.SetText(text);
     }
 

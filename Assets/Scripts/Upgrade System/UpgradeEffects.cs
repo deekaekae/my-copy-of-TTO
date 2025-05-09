@@ -159,22 +159,6 @@ using System.Linq;
         Debug.Log($"[UpgradeEffects] One-time upgrade used: {upgrade.name}");
     }
 
-    // Optional helper if you want passive upgrades to influence calculations
-    
-    public static float GetTotalMultiplierBonus()
-    {
-        float total = 0f;
-        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
-        {
-            if (upgrade.effectType == UpgradeEffectType.Reward &&
-                upgrade.upgradeName == "Multiplier Boost" &&
-                upgrade.category == UpgradeCategory.Passive)
-            {
-                total += upgrade.effectStrength;
-            }
-        }
-        return total;
-    }
 
     public static float GetChanceToLandHeads()
     {
