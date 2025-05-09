@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro; //TextMeshPro for UI
+using TMPro; 
 
+//Old file
 public class Announcer : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI announcementText;
@@ -22,7 +23,6 @@ public class Announcer : MonoBehaviour
             announcementText.text = $"Next Coin: {callString}";
     }
 
-    // Optional helper: Randomly announce a new call
     public bool GenerateAndAnnounce()
     {
         bool coinCall = Random.value < 0.5f;

@@ -18,6 +18,8 @@ public class GameManager : MonoBehaviour
 
     private List<bool> targetSequence = new List<bool>();
     private List<GameObject> currentCoins = new List<GameObject>();
+    private List<GameObject> playerCoinsThisRound = new();
+
 
     private int currentRound = 1;
     private int coinsPerRound;
@@ -26,7 +28,10 @@ public class GameManager : MonoBehaviour
     private bool playerTurnComplete = false;
     private bool aiTurnComplete = false;
     private int playerAttemptsRemaining = 2;
+    private int playerFlipCount = 0;
 
+    
+    private bool lastFlipMatched; 
     public int GetPlayerAttemptsRemaining() => playerAttemptsRemaining;
 
     private enum GameState
@@ -53,10 +58,8 @@ public class GameManager : MonoBehaviour
         uiManager.ShowGameStart(() => StartCoroutine(DelayedStartRound()));
     }
 
-    public void OnPlayerFinishedTurn(bool success)
-    {
-        if (currentCoinIndex >= targetSequence.Count)
-        {
+    public void OnPlayerFinishedTurn(bool success){
+        if (currentCoinIndex >= targetSequence.Count){
             Debug.LogWarning("OnPlayerFinishedTurn called after round ended.");
             return;
         }
@@ -64,62 +67,66 @@ public class GameManager : MonoBehaviour
         playerTurnComplete = true;
         currentState = GameState.AITurn;
 
-        cameraRig.MoveToAI();  // 👈 Move to AI view after player finishes
+        cameraRig.MoveToAI();  // AI turn camera move
         ai.StartTurn(targetSequence[currentCoinIndex]);
 
         CheckTurnComplete();
     }
 
-    private List<bool> GenerateSequence(int length)
-    {
+    private List<bool> GenerateSequence(int length){
         List<bool> sequence = new List<bool>();
-        for (int i = 0; i < length; i++)
-        {
+        for (int i = 0; i < length; i++){
             sequence.Add(Random.value < 0.5f);
         }
         return sequence;
     }
 
-    public void StartRound()
-    {
+    public void StartRound(){
+        //tracking for putting round coins aside
+        coinSpawner.ResetCoinLayout();
         currentCoinIndex = 0;
+
+        playerCoinsThisRound.Clear();
+        playerFlipCount = 0;
+        
+
         coinsPerRound = currentRound;
         targetSequence = GenerateSequence(coinsPerRound);
 
         coinSpawner.ClearCoins();
         currentCoins.Clear();
 
-        Debug.Log($"Starting Round {currentRound} with {coinsPerRound} coins.");
-
         uiManager?.ShowRound(currentRound);
         uiManager?.ClearFlipResults();
 
         ResetPlayerAttempts();
 
-        cameraRig.MoveToAnnouncer();  // 👈 Start at announcer's view
+        cameraRig.MoveToAnnouncer();  
         ProceedToNextCoin();
     }
 
-    public void ProceedToNextCoin()
-    {
-        if (currentCoinIndex >= coinsPerRound)
-        {
-            Debug.Log("All coins played. Ending round.");
+    public void ProceedToNextCoin(){
+        if (currentCoinIndex >= coinsPerRound){
             EndRound();
             return;
         }
 
         playerTurnComplete = false;
         aiTurnComplete = false;
-        //test
+        
         bool nextCall = targetSequence[currentCoinIndex];
         StartCoroutine(AnnounceAndWait(nextCall));
 
-        GameObject playerCoin = coinSpawner.SpawnPlayerCoin();
-        GameObject aiCoin = coinSpawner.SpawnAICoin();
+        // If there's a previous coin, move it aside BEFORE spawning a new one
+       if (playerCoinsThisRound.Count > 0){
+            GameObject lastPlayerCoin = playerCoinsThisRound[playerCoinsThisRound.Count - 1];
+            coinSpawner.MoveCoinAside(lastPlayerCoin);
+        }
 
+        GameObject playerCoin = coinSpawner.SpawnPlayerCoin();
+        playerCoinsThisRound.Add(playerCoin);
+        GameObject aiCoin = coinSpawner.SpawnAICoin();
         currentCoins.Add(playerCoin);
-        currentCoins.Add(aiCoin);
 
         player.SetCurrentCoin(playerCoin);
         ai.SetCurrentCoin(aiCoin);
@@ -138,44 +145,42 @@ public class GameManager : MonoBehaviour
         RewardManager.Instance.ResetCoinRewardFlag();
     }
 
-    private System.Collections.IEnumerator TransitionToPlayerTurn(float delay)
-    {
+    private System.Collections.IEnumerator TransitionToPlayerTurn(float delay){
         yield return new WaitForSeconds(delay);
 
-        if (currentCoinIndex >= targetSequence.Count)
-        {
+        if (currentCoinIndex >= targetSequence.Count){
             Debug.LogWarning("Tried to start player turn after sequence ended.");
             yield break;
         }
 
         bool expected = targetSequence[currentCoinIndex];
+        //this is tilt 
+        UpgradeEffects.ApplyAllEffects(ref expected, currentCoinIndex);
         currentState = GameState.PlayerTurn;
 
-        cameraRig.MoveToPlayer();  // 👈 Move to player camera for turn
+        cameraRig.MoveToPlayer();  
         player.StartTurn(expected);
     }
 
-    public void OnAIFinishedTurn(bool success)
-    {
-        if (currentCoinIndex >= targetSequence.Count)
-        {
+    public void OnAIFinishedTurn(bool success){
+        if (currentCoinIndex >= targetSequence.Count){
             Debug.LogWarning("OnAIFinishedTurn called after round ended.");
             return;
         }
 
         aiTurnComplete = true;
-
-        cameraRig.MoveToAnnouncer();  // 👈 Return to announcer after AI finishes
+        cameraRig.MoveToAnnouncer(); 
         CheckTurnComplete();
     }
 
-    private void CheckTurnComplete()
-    {
-        if (playerTurnComplete && aiTurnComplete)
-        {
-            coinSpawner.MoveCoinAside(currentCoins[currentCoinIndex]);
+    private void CheckTurnComplete(){
+        if (playerTurnComplete && aiTurnComplete){
+            // Move the current coin BEFORE incrementing the index
+            GameObject completedCoin = currentCoins[currentCoinIndex];
+            coinSpawner.MoveCoinAside(completedCoin);
 
-            CoinClickTarget clickTarget = currentCoins[currentCoinIndex].GetComponent<CoinClickTarget>();
+            // Disable  click target
+            CoinClickTarget clickTarget = completedCoin.GetComponent<CoinClickTarget>();
             if (clickTarget != null)
                 clickTarget.SetActive(false);
 
@@ -184,94 +189,104 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void EndRound()
-    {
+
+    private void EndRound(){
         currentState = GameState.EndRound;
         Debug.Log($"Round {currentRound} Complete.");
-        
-        if (currentRound == 1)
-        {
-            Debug.Log("Buy Phase triggered after round 1.");
-            UIManager.Instance.ShowBuyPhase();
-            return; // Skip auto-starting next round for now
-        }
 
-        currentRound++;
-        StartCoroutine(NextRoundDelay(2f));
+        UIManager.Instance.ShowBuyPhase();
+        currentRound++; 
     }
 
-    private System.Collections.IEnumerator NextRoundDelay(float delay)
-    {
+    private System.Collections.IEnumerator NextRoundDelay(float delay){
         yield return new WaitForSeconds(delay);
         StartRound();
     }
 
-    public void UsePlayerAttempt()
-    {
+    public void UsePlayerAttempt(){
         if (playerAttemptsRemaining > 0)
             playerAttemptsRemaining--;
 
         UIManager.Instance?.ShowAttempts(playerAttemptsRemaining);
     }
 
-    public void ResetPlayerAttempts(int value = 2)
-    {
+    public void AddExtraAttempt(){
+        playerAttemptsRemaining++;
+        UIManager.Instance?.ShowAttempts(playerAttemptsRemaining);
+    }
+
+    public void ResetPlayerAttempts(int value = 2){
         playerAttemptsRemaining = value;
+
+        //Mercy effect type not yet implemented
+        foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades()){
+            if (upgrade.effectType == UpgradeEffectType.Mercy &&
+                upgrade.upgradeName == "Extra Attempt" &&
+                upgrade.category == UpgradeCategory.Passive)
+            {
+                int bonus = Mathf.RoundToInt(upgrade.effectStrength);
+                playerAttemptsRemaining += bonus;
+                Debug.Log($"[GameManager] Mercy upgrade added {bonus} extra attempt(s).");
+            }
+        }
+
         if (UIManager.Instance != null)
             UIManager.Instance.ShowAttempts(playerAttemptsRemaining);
         else
             Debug.LogWarning("UIManager.Instance was null when resetting attempts.");
     }
 
-    private System.Collections.IEnumerator DelayedStartRound()
-    {
-        while (UIManager.Instance == null)
-        {
-            Debug.Log("Waiting for UIManager to initialize...");
+
+    private System.Collections.IEnumerator DelayedStartRound(){
+        while (UIManager.Instance == null){
             yield return null;
         }
 
         StartRound();
     }
 
-    public void EndGameDueToPlayerFailure()
-    {
-        Debug.Log("Game Over: Player failed with no attempts left.");
+    public void EndGameDueToPlayerFailure(){
         StopAllCoroutines();
         currentState = GameState.Idle;
         uiManager.ShowGameOver(RestartGame);
     }
 
-    private void RestartGame()
-    {
+    private void RestartGame(){
         Debug.Log("Restarting game...");
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
-    private IEnumerator AnnounceAndWait(bool call)
-    {
+    private IEnumerator AnnounceAndWait(bool call){
         cameraRig.MoveToAnnouncer();
-        //test
-        yield return new WaitForSeconds(1f); // brief pause
+        yield return new WaitForSeconds(1.5f); 
 
         announcer.Announce(call);
 
         // Flip the announcer's coin with animation
-        if (announcerCoin != null)
-        {
+        if (announcerCoin != null){
             var flipper = announcerCoin.GetComponent<CoinFlipper>();
-            if (flipper != null)
-            {
-                flipper.ResetState();  // optional safety
-                flipper.Flip(call);    // animate with correct result
+            if (flipper != null){
+                flipper.ResetState();  
+                flipper.Flip(call);    
             }
-            else
-            {
-                Debug.LogWarning("Announcer coin is missing CoinFlipper.");
-            }
+        
         }
 
         yield return new WaitForSeconds(3.5f); // wait for animation to finish
     }
+
+    public void SetLastFlipMatched(bool matched){
+        lastFlipMatched = matched;
+    }
+
+    public bool LastFlipMatched(){
+        return lastFlipMatched;
+    }
+    public bool IsPlayerTurn(){
+        return currentState == GameState.PlayerTurn;
+    }
+
+    
+
 
 }

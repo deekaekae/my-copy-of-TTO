@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e33fb4b9e0c3548cc9bcfd4618a66099, type: 3}
+  m_Name: LuckyCharm
+  m_EditorClassIdentifier: 
+  upgradeName: Lucky Charm
+  description: Gain +30% to match the announcer's all on the first flip each round.
+  cost: 0
+  category: 0
+  effectType: 0
+  effectStrength: 0.3
+  affectsMatchExpected: 1
+  affectsHeads: 0
+  affectsTails: 0
+  firstFlipOnly: 1

@@ -8,7 +8,10 @@ public class UpgradeManager : MonoBehaviour
 
     [SerializeField] private List<Upgrade> availableUpgrades;
 
-    private Dictionary<Upgrade.UpgradeType, int> playerUpgrades = new();
+    private List<Upgrade> playerUpgrades = new();
+    private List<Upgrade> oneTimeUseUpgrades = new();
+    
+
 
     private void Awake()
     {
@@ -19,66 +22,77 @@ public class UpgradeManager : MonoBehaviour
         }
         Instance = this;
 
-        //InitializeUpgrades();
-    }
-
-    /*
-    private void InitializeUpgrades()
-    {
-       
-
-        availableUpgrades.Clear();
-        /*
-        availableUpgrades.Add(new Upgrade("Double or Nothing", "Double your reward on success.", 20, Upgrade.UpgradeType.DoubleOrNothing, true));
-        availableUpgrades.Add(new Upgrade("Tilt", "Increase odds of HEADS or TAILS.", 15, Upgrade.UpgradeType.Tilt, false));
-        availableUpgrades.Add(new Upgrade("Streaks", "Boost your multiplier more per streak.", 25, Upgrade.UpgradeType.Streaks, false));
-        availableUpgrades.Add(new Upgrade("Thief", "Steal one of the opponent's upgrades.", 30, Upgrade.UpgradeType.Thief, true));
-        availableUpgrades.Add(new Upgrade("Stun", "Skip opponent turn on success.", 35, Upgrade.UpgradeType.Stun, true));
-        availableUpgrades.Add(new Upgrade("Mercy", "Permanently gain an extra flip attempt.", 40, Upgrade.UpgradeType.Mercy, false));
         
     }
-    */
+
+   
     public List<Upgrade> GetAvailableUpgrades()
     {
         return availableUpgrades;
     }
 
-    public int GetUpgradeCount(Upgrade.UpgradeType type)
-    {
-        return playerUpgrades.ContainsKey(type) ? playerUpgrades[type] : 0;
+    public int GetUpgradeCount(string upgradeName){
+        int count = 0;
+        foreach (var upgrade in playerUpgrades){
+            if (upgrade.upgradeName == upgradeName)
+                count++;
+        }
+        foreach (var upgrade in oneTimeUseUpgrades){
+            if (upgrade.upgradeName == upgradeName)
+                count++;
+        }
+        return count;
     }
 
-    public bool TryPurchaseUpgrade(Upgrade upgrade)
-    {
-        if (RewardManager.Instance.GetCurrentCash() >= upgrade.cost)
-        {
+    public bool TryPurchaseUpgrade(Upgrade upgrade){
+        if (RewardManager.Instance.GetCurrentCash() >= upgrade.cost){
             RewardManager.Instance.SpendCash(upgrade.cost);
 
-            if (playerUpgrades.ContainsKey(upgrade.type))
-                playerUpgrades[upgrade.type]++;
-            else
-                playerUpgrades[upgrade.type] = 1;
+            if (upgrade.category == UpgradeCategory.OneTimeUse){
+                oneTimeUseUpgrades.Add(upgrade);
+            }
+            else{
+                playerUpgrades.Add(upgrade);
+            }
 
-            Debug.Log($"Purchased upgrade: {upgrade.upgradeName} (Now owns {playerUpgrades[upgrade.type]})");
+            int count = GetUpgradeCount(upgrade.upgradeName);
+            Debug.Log($"Purchased upgrade: {upgrade.upgradeName} (Now owns {count})");
             return true;
         }
         return false;
     }
 
-    public bool HasUpgrade(Upgrade.UpgradeType type)
-    {
-        return playerUpgrades.ContainsKey(type) && playerUpgrades[type] > 0;
+
+    public bool HasUpgradeNamed(string upgradeName){
+        foreach (var upgrade in GetPlayerUpgrades()){
+            if (upgrade.upgradeName == upgradeName)
+                return true;
+        }
+        return false;
     }
 
-    public void UseOneTimeUpgrade(Upgrade.UpgradeType type)
-    {
-        if (playerUpgrades.ContainsKey(type) && playerUpgrades[type] > 0)
-        {
-            playerUpgrades[type]--;
-            Debug.Log($"Used one-time upgrade: {type} (Remaining: {playerUpgrades[type]})");
 
-            if (playerUpgrades[type] <= 0)
-                playerUpgrades.Remove(type);
+    public void UseOneTimeUpgrade(string upgradeName){
+        for (int i = 0; i < oneTimeUseUpgrades.Count; i++){
+            if (oneTimeUseUpgrades[i].upgradeName == upgradeName){
+                Debug.Log($"Used one-time upgrade: {upgradeName}");
+                oneTimeUseUpgrades.RemoveAt(i);
+                return;
+            }
         }
     }
+
+
+    public List<Upgrade> GetPlayerUpgrades(){
+        return playerUpgrades;
+    }
+    public List<Upgrade> GetOneTimeUseUpgrades(){
+        return oneTimeUseUpgrades;
+    }
+
+    
+
+
+
+
 }

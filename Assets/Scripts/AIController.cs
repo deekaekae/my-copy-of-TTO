@@ -12,8 +12,7 @@ public class AIController : MonoBehaviour
     [SerializeField] private UIManager uiManager;
 
 
-    public void StartTurn(bool expected)
-    {
+    public void StartTurn(bool expected){
         
         expectedResult = expected;
         isTurnActive = true;
@@ -23,13 +22,11 @@ public class AIController : MonoBehaviour
         StartCoroutine(AIDelayFlip());
     }
 
-    private IEnumerator AIDelayFlip()
-    {
+    private IEnumerator AIDelayFlip(){
         yield return new WaitForSeconds(1.5f); // Give camera time
 
         // Check if round is still valid
-        if (!isTurnActive || GameManager.Instance == null || currentCoin == null)
-        {
+        if (!isTurnActive || GameManager.Instance == null || currentCoin == null){
             Debug.LogWarning("AI flip aborted: Turn ended or context lost.");
             yield break;
         }
@@ -39,10 +36,8 @@ public class AIController : MonoBehaviour
     }
 
 
-    private void HandleFlipResult(bool result)
-    {
+    private void HandleFlipResult(bool result){
         if (!isTurnActive) return;
-
         isTurnActive = false;
 
         if (uiManager != null)
@@ -50,11 +45,8 @@ public class AIController : MonoBehaviour
 
         bool success = result == expectedResult;
 
-        Debug.Log("AI flipped: " + (result ? "HEADS" : "TAILS") + (success ? " ✅" : " ❌"));
-
-        if (success)
-        {
-            RewardManager.Instance.UpdateAIRewards();  // <-- ADD THIS LINE
+        if (success){
+            RewardManager.Instance.UpdateAIRewards();
         }
 
         GameManager.Instance.OnAIFinishedTurn(success);
@@ -62,21 +54,18 @@ public class AIController : MonoBehaviour
 
     
 
-    public void SetCurrentCoin(GameObject coin)
-    {
+    public void SetCurrentCoin(GameObject coin){
         if (coinFlipper != null)
             coinFlipper.OnFlipComplete -= HandleFlipResult;
 
         currentCoin = coin;
         coinFlipper = currentCoin.GetComponent<CoinFlipper>();
 
-        if (coinFlipper != null)
-        {
+        if (coinFlipper != null){
             coinFlipper.OnFlipComplete += HandleFlipResult;
             Debug.Log("AIController: Subscribed to new coin flipper");
         }
-        else
-        {
+        else{
             Debug.LogWarning("AIController: No CoinFlipper found on assigned coin");
         }
     }

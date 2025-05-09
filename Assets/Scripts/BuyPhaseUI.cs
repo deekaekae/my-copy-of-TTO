@@ -6,65 +6,62 @@ public class BuyPhaseUI : MonoBehaviour
 {
     [SerializeField] private GameObject buttonPrefab;
     [SerializeField] private Transform buttonContainer;
-    //[SerializeField] private GameObject BuyPhasePanel;
 
     private void OnEnable()
     {
         ClearButtons();
 
-        if (buttonPrefab == null)
-        {
-            Debug.LogError("[BuyPhaseUI] Button Prefab is NOT assigned!");
+        if (buttonPrefab == null){
             return;
         }
 
-        if (buttonContainer == null)
-        {
-            Debug.LogError("[BuyPhaseUI] Button Container is NOT assigned!");
+        if (buttonContainer == null){
             return;
         }
 
-        Debug.Log("[BuyPhaseUI] Instantiating upgrade buttons...");
+        Debug.Log("Instantiating upgrade buttons...");
 
-        foreach (var upgrade in UpgradeManager.Instance.GetAvailableUpgrades())
-        {
-            if (upgrade == null)
-            {
-                Debug.LogWarning("[BuyPhaseUI] Skipped null upgrade entry.");
+        foreach (var upgrade in UpgradeManager.Instance.GetAvailableUpgrades()){
+            if (upgrade == null){
                 continue;
             }
 
             Debug.Log($"Loaded Upgrade: {upgrade.upgradeName}");
             GameObject btnObj = Instantiate(buttonPrefab, buttonContainer);
             var text = btnObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (text == null)
-            {
-                Debug.LogError("[BuyPhaseUI] No TextMeshProUGUI found in button.");
+            
+            if (text == null){
+                Debug.LogError("No TextMeshProUGUI found in button.");
                 continue;
             }
 
             text.text = $"{upgrade.upgradeName} - ${upgrade.cost}";
 
+            //hover for description
+            var hover = btnObj.GetComponent<UpgradeButtonHover>();
+            if (hover != null)
+                hover.upgradeData = upgrade;
+
             Button btn = btnObj.GetComponent<Button>();
-            if (btn != null)
-            {
+            if (btn != null){
                 var upgradeCopy = upgrade;
                 btn.onClick.AddListener(() =>
                 {
                     bool success = UpgradeManager.Instance.TryPurchaseUpgrade(upgradeCopy);
-                    if (success)
+                    if (success){
                         UIManager.Instance.ShowUpgradeConfirmation(upgradeCopy.upgradeName);
+                        UIManager.Instance.UpdateBuyPhaseCashDisplay();
+                        UIManager.Instance.UpdateRewardUI(true, RewardManager.Instance.GetCurrentCash(), RewardManager.Instance.GetMultiplier());
+
+                    }
                 });
             }
         }
 
     }
 
-
-    private void ClearButtons()
-    {
-        foreach (Transform child in buttonContainer)
-        {
+    private void ClearButtons(){
+        foreach (Transform child in buttonContainer){
             Destroy(child.gameObject);
         }
     }

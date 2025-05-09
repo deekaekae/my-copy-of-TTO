@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e33fb4b9e0c3548cc9bcfd4618a66099, type: 3}
+  m_Name: DoubleDown
+  m_EditorClassIdentifier: 
+  upgradeName: Double Down
+  description: If next flip is a match, double total cash. If not, lose 30% of cash.
+  cost: 0
+  category: 1
+  effectType: 1
+  effectStrength: 0
+  affectsMatchExpected: 0
+  affectsHeads: 0
+  affectsTails: 0
+  firstFlipOnly: 0
+  rewardModifiesSuccess: 1
+  affectsMultiplier: 0
+  successCashMultiplier: 2
+  rewardModifiesFailure: 1
+  failCashPenaltyPercent: 0.3
+  flatCashAmount: 0
+  affectsCash: 1

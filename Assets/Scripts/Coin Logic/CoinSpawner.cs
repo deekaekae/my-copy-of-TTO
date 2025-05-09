@@ -13,8 +13,9 @@ public class CoinSpawner : MonoBehaviour
 
     private List<GameObject> activeCoins = new List<GameObject>();
 
-    public void ClearCoins()
-    {
+    private int movedCoinCount = 0;
+
+    public void ClearCoins(){
         foreach (var coin in activeCoins)
         {
             Destroy(coin);
@@ -22,32 +23,45 @@ public class CoinSpawner : MonoBehaviour
         activeCoins.Clear();
     }
 
-    public void MoveCoinAside(GameObject coin)
-    {
-        int usedIndex = activeCoins.IndexOf(coin);
-        float offset = (usedIndex - 0.5f) * .75f;
-        coin.transform.position = new Vector3(coin.transform.position.x + offset, coin.transform.position.y, coin.transform.position.z + 2f);
+   public void MoveCoinAside(GameObject coin){
+        float spacing = .6f;
+        float xOffset = movedCoinCount * spacing;
+
+        Vector3 newPosition = new Vector3(
+            playerSpawnPoint.position.x + xOffset,
+            playerSpawnPoint.position.y,
+            playerSpawnPoint.position.z + 2f
+        );
+
+        coin.transform.position = newPosition;
+
+        movedCoinCount++;
     }
 
-    public GameObject SpawnSingleCoin()
-    {
+
+
+
+    public GameObject SpawnSingleCoin(){
         Vector3 position = playerSpawnPoint.position;
         GameObject coin = Instantiate(playerCoinPrefab, position, Quaternion.identity);
         activeCoins.Add(coin);
         return coin;
     }
 
-    public GameObject SpawnPlayerCoin()
-    {
+    public GameObject SpawnPlayerCoin(){
         GameObject coin = Instantiate(playerCoinPrefab, playerSpawnPoint.position, Quaternion.identity);
         activeCoins.Add(coin);
         return coin;
     }
 
-    public GameObject SpawnAICoin()
-    {
+    public GameObject SpawnAICoin(){
         GameObject coin = Instantiate(aiCoinPrefab, aiSpawnPoint.position, Quaternion.identity);
         activeCoins.Add(coin);
         return coin;
     }
+
+    public void ResetCoinLayout(){
+        movedCoinCount = 0;
+    }
+
 }

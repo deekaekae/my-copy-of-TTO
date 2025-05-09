@@ -29,18 +29,33 @@ public class UIManager : MonoBehaviour
     [Header("Buttons")]
     [SerializeField] private Button retryButton;
     [SerializeField] private Button startGameButton;
+    [SerializeField] private GameObject InventoryButton;
+    [SerializeField] private GameObject StatsButton;
     [Header("Upgrade Debug Panel")]
     [SerializeField] private GameObject upgradeDebugPanel;
     [SerializeField] private TextMeshProUGUI upgradeDebugText;  
     [SerializeField] private GameObject buyPhasePanel;
     [SerializeField] private TextMeshProUGUI upgradeConfirmText;
+    [Header("Inventory Panel")]
+    [SerializeField] private GameObject inventoryPanel;
+    [SerializeField] private GameObject otuButton; // one-time-use button prefab
+    [SerializeField] private Transform otuButtonContainer;
+    [SerializeField] private TextMeshProUGUI upgradeDescriptionText;
+    [SerializeField] private TextMeshProUGUI buyPhaseCashText;
 
+    [Header("Misc")]
 
     private List<GameObject> previouslyActivePanels = new();
     private bool isDebugViewActive = false;
-
+    private bool isInventoryVisible = false;
 
     public static UIManager Instance { get; private set; }
+    public GameObject flipRewardPopupPrefab;
+    public Transform popupAnchor;
+
+    [Header("How To Play Panel")]
+    [SerializeField] private GameObject howToPlayPanel;
+
 
     private void Awake()
     {
@@ -53,72 +68,82 @@ public class UIManager : MonoBehaviour
         Instance = this;
     }
  
-    public void UpdateUpgradeDebugPanel()
-    {
+    public void UpdateUpgradeDebugPanel(){
         if (upgradeDebugPanel == null || upgradeDebugText == null)
             return;
 
-        upgradeDebugPanel.SetActive(true); // Ensure it's visible when updating
-
-        string upgrades = "Upgrades:\n";
-        foreach (var upg in UpgradeManager.Instance.GetAvailableUpgrades())
-        {
-            int count = UpgradeManager.Instance.GetUpgradeCount(upg.type);
+        upgradeDebugPanel.SetActive(true); //still needs to be seen when updating
+        string upgrades = "All Currently Owned Upgrades:\n";
+        foreach (var upg in UpgradeManager.Instance.GetAvailableUpgrades()){
+            int count = UpgradeManager.Instance.GetUpgradeCount(upg.upgradeName);
             if (count > 0)
                 upgrades += $"- {upg.upgradeName} ({count})\n";
         }
+
+        //INSERT QUEUED OTU DISPLAY HERE
+        var queuedOTUs = UpgradeEffects.GetQueuedOTUs();
+        if (queuedOTUs.Count > 0){
+            upgrades += "\nQueued OTU Upgrades:\n";
+            foreach (var queued in queuedOTUs){
+                upgrades += $"- {queued.upgradeName}\n";
+            }
+        }
+        upgrades += "\nActive Passive Upgrades:\n";
+        foreach (var upg in UpgradeManager.Instance.GetPlayerUpgrades()){
+            upgrades += $"- {upg.upgradeName} [{upg.effectStrength * 100f}%]\n";
+        }
+
+        upgrades += "\nCurrent Turn Probabilities:\n";
+        upgrades += $"- % Heads Chance: {UpgradeEffects.GetChanceToLandHeads()}%\n";
+        upgrades += $"- % Tails Chance: {UpgradeEffects.GetChanceToLandTails()}%\n";
+        upgrades += $"- % Match Target: {UpgradeEffects.GetChanceToMatchExpected()}%\n";
 
         upgrades += "\nStats:\n";
         upgrades += $"- Attempts Left: {GameManager.Instance.GetPlayerAttemptsRemaining()}\n";
         upgrades += $"- Multiplier: x{RewardManager.Instance.GetMultiplier()}\n";
         upgrades += $"- Cash: ${RewardManager.Instance.GetCurrentCash()}\n";
-        upgrades += "\nProbabilities:\n";
-        upgrades += $"- % Heads Chance: {UpgradeEffects.GetChanceToLandHeads()}%\n";
-        upgrades += $"- % Tails Chance: {UpgradeEffects.GetChanceToLandTails()}%\n";
-        upgrades += $"- % Match Target: {UpgradeEffects.GetChanceToMatchExpected()}%\n";
-
+        
         upgradeDebugText.text = upgrades;
     }
 
-    public void ShowBuyPhase()
-    {
+
+    public void ShowBuyPhase(){
+        buyPhaseCashText.text = $"Cash: ${RewardManager.Instance.GetCurrentCash()}";
         buyPhasePanel.SetActive(true);
+        if (backgroundPanel != null)
+            backgroundPanel.SetActive(false);
     }
 
-    public void HideBuyPhaseAndContinue()
-    {
+    public void HideBuyPhaseAndContinue(){
         buyPhasePanel.SetActive(false);
+        if (backgroundPanel != null)
+            backgroundPanel.SetActive(true);
         GameManager.Instance.StartRound();  // resume game
     }
 
  
     // ----- Flip Results -----
-    public void ShowPlayerResult(string message)
-    {
+    public void ShowPlayerResult(string message){
         if (playerResultText != null)
             playerResultText.text = message;
     }
 
-    public void ShowAIResult(string message)
-    {
+    public void ShowAIResult(string message){
         if (aiResultText != null)
             aiResultText.text = message;
     }
 
-    public void ClearFlipResults()
-    {
+    public void ClearFlipResults(){
         playerResultText.text = "";
         aiResultText.text = "";
     }
 
     // ----- Player Stats -----
-    public void ShowAttempts(int remaining)
-    {
+    public void ShowAttempts(int remaining){
         attemptText.text = "Mercy Flips: " + remaining;
     }
 
-    public void ShowRound(int round)
-    {
+    public void ShowRound(int round){
         if (roundText != null){
             roundText.text = "Round: " + round;
             Debug.Log("UIManager: Updated round text to Round: " + round);
@@ -129,11 +154,9 @@ public class UIManager : MonoBehaviour
             
     }
 
-    public void ClearAll()
-    {
+    public void ClearAll(){
         ClearFlipResults();
         attemptText.text = "";
-        //roundText.text = "";
     }
 
     public void ShowPlayerMessage(string message){
@@ -141,30 +164,26 @@ public class UIManager : MonoBehaviour
             playerResultText.text = message;
     }
 
-    public void UpdateRewardUI(bool isPlayer, int cash, int multiplier)
-    {
-        if (isPlayer)
-        {
+    public void UpdateRewardUI(bool isPlayer, int cash, int multiplier){
+        if (isPlayer){
             if (playerCashText != null)
                 playerCashText.text = $"Cash: ${cash}";
 
             if (playerMultiplierText != null)
                 playerMultiplierText.text = $"Multiplier: x{multiplier}";
         }
-        else
-        {
+        else{
             if (aiCashText != null)
                 aiCashText.text = $"Cash: ${cash}";
 
             if (aiMultiplierText != null)
                 aiMultiplierText.text = $"Multiplier: x{multiplier}";
         }
-        Debug.Log($"[DEBUG UI] Showing Cash: {cash}, Mult: x{multiplier}");
+        //Debug.Log($"[DEBUG UI] Showing Cash: {cash}, Mult: x{multiplier}");
 
     }
 
-    public void ShowGameOver(Action onRetry)
-    {
+    public void ShowGameOver(Action onRetry){
         gameOverPanel.SetActive(true);
         retryButton.onClick.RemoveAllListeners();
         retryButton.onClick.AddListener(() => {
@@ -173,30 +192,28 @@ public class UIManager : MonoBehaviour
         });
     }
 
-    public void ShowGameStart(System.Action onStart)
-    {
+    public void ShowGameStart(System.Action onStart){
         gameStartPanel.SetActive(true);
         startGameButton.onClick.RemoveAllListeners();
         startGameButton.onClick.AddListener(() => {
             backgroundPanel.SetActive(true);
             gameStartPanel.SetActive(false);
+            StatsButton.SetActive(true);
+            InventoryButton.SetActive(true);
             onStart?.Invoke();
         });
     }
 
-    public void ToggleUpgradeDebugPanel()
-    {
+    public void ToggleUpgradeDebugPanel(){
         if (upgradeDebugPanel == null) return;
 
         isDebugViewActive = !isDebugViewActive;
 
-        if (isDebugViewActive)
-        {
-            // Hide all active sibling panels except the debug panel
+        if (isDebugViewActive){
+            // Hide all active panels except the debug panel
             previouslyActivePanels.Clear();
 
-            foreach (Transform child in upgradeDebugPanel.transform.parent)
-            {
+            foreach (Transform child in upgradeDebugPanel.transform.parent){
                 GameObject panel = child.gameObject;
 
                 // Skip self and any inactive objects
@@ -210,11 +227,9 @@ public class UIManager : MonoBehaviour
             upgradeDebugPanel.SetActive(true);
             UpdateUpgradeDebugPanel();
         }
-        else
-        {
+        else{
             // Restore previously hidden panels
-            foreach (var panel in previouslyActivePanels)
-            {
+            foreach (var panel in previouslyActivePanels){
                 if (panel != null)
                     panel.SetActive(true);
             }
@@ -223,23 +238,20 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowUpgradeConfirmation(string upgradeName)
-    {
+    public void ShowUpgradeConfirmation(string upgradeName){
         if (upgradeConfirmText == null) return;
 
-        StopAllCoroutines(); // cancel any previous animations
+        StopAllCoroutines(); // cancel previous animations
         upgradeConfirmText.text = $"{upgradeName} Purchased!";
         upgradeConfirmText.alpha = 1f;
         StartCoroutine(FadeOutText(upgradeConfirmText, 3f));
     }
 
-    private IEnumerator FadeOutText(TextMeshProUGUI text, float duration)
-    {
+    private IEnumerator FadeOutText(TextMeshProUGUI text, float duration){
         float startAlpha = 1f;
         float time = 0f;
 
-        while (time < duration)
-        {
+        while (time < duration){
             float alpha = Mathf.Lerp(startAlpha, 0f, time / duration);
             text.alpha = alpha;
             time += Time.deltaTime;
@@ -249,9 +261,103 @@ public class UIManager : MonoBehaviour
         text.alpha = 0f;
     }
 
+    private void ClearInventoryButtons(){
+        foreach (Transform child in otuButtonContainer){
+            Destroy(child.gameObject);
+        }
+    }
+    public void HideInventoryPanel(){
+        inventoryPanel.SetActive(false);
+        isInventoryVisible = false;
+    }
+    public void ShowHowToPlayPanel(){
+        howToPlayPanel.SetActive(true);
+    }
+
+    public void HideHowToPlayPanel(){
+        howToPlayPanel.SetActive(false);
+    }
+
+    public void ToggleInventoryPanel(){
+        if (isInventoryVisible){
+            inventoryPanel.SetActive(false);
+            isInventoryVisible = false;
+            return;
+        }
+
+        inventoryPanel.SetActive(true);
+        isInventoryVisible = true;
+
+        RedrawInventoryPanel(); 
+    }
 
 
+    public void RedrawInventoryPanel(){
+        ClearInventoryButtons();
+
+        var upgrades = UpgradeManager.Instance.GetOneTimeUseUpgrades();
+        foreach (var upgrade in upgrades){
+            GameObject btnObj = Instantiate(otuButton, otuButtonContainer);
+            var text = btnObj.GetComponentInChildren<TextMeshProUGUI>();
+            var hover = btnObj.GetComponent<UpgradeButtonHover>();
+            if (hover != null)
+                hover.upgradeData = upgrade;
+
+            if (text != null)
+                text.text = upgrade.upgradeName;
+
+            var btn = btnObj.GetComponent<Button>();
+            if (btn != null){
+                var capturedUpgrade = upgrade;
+                btn.onClick.AddListener(() =>
+                {
+                    UpgradeEffects.ApplyOneTimeUseUpgrade(capturedUpgrade);
+                    UpgradeManager.Instance.UseOneTimeUpgrade(capturedUpgrade.upgradeName);
+                    UpdateUpgradeDebugPanel();
+                    upgradeDebugPanel.SetActive(false);
+
+                    //just refresh the inventory, don't close or reset it
+                    RedrawInventoryPanel();
+                });
+            }
+        }
+    }
+    public void UpdateBuyPhaseCashDisplay(){
+        if (buyPhaseCashText != null)
+            buyPhaseCashText.text = $"Cash: ${RewardManager.Instance.GetCurrentCash()}";
+    }
+
+    
+    public void ShowFlipRewardPopup(int multiplier, int cash){
+        if (flipRewardPopupPrefab == null){
+            return;
+        }
+
+        if (popupAnchor == null){
+            return;
+        }
+
+        var popup = Instantiate(flipRewardPopupPrefab, popupAnchor);
+        var popupScript = popup.GetComponent<RewardPopup>();
+
+        //POPUPREWARD TEXT
+        string text = $"+${cash} +1 MULT!!";
+        popupScript.SetText(text);
+    }
+
+    public void ShowUpgradeDescription(string description){
+        if (upgradeDescriptionText != null){
+            upgradeDescriptionText.text = description;
+            upgradeDescriptionText.gameObject.SetActive(true);
+        }
+    }
+
+    public void ClearUpgradeDescription(){
+        if (upgradeDescriptionText != null){
+            upgradeDescriptionText.text = "";
+            upgradeDescriptionText.gameObject.SetActive(false);
+        }
+    }
 
 }
 
-//test
