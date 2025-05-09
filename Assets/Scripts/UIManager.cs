@@ -43,7 +43,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI upgradeDescriptionText;
     [SerializeField] private TextMeshProUGUI buyPhaseCashText;
 
-
+    [Header("Misc")]
 
     private List<GameObject> previouslyActivePanels = new();
     private bool isDebugViewActive = false;
@@ -52,6 +52,10 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
     public GameObject flipRewardPopupPrefab;
     public Transform popupAnchor;
+
+    [Header("How To Play Panel")]
+    [SerializeField] private GameObject howToPlayPanel;
+
 
     private void Awake()
     {
@@ -300,6 +304,16 @@ public class UIManager : MonoBehaviour
         inventoryPanel.SetActive(false);
         isInventoryVisible = false;
     }
+    public void ShowHowToPlayPanel()
+    {
+        howToPlayPanel.SetActive(true);
+    }
+
+    public void HideHowToPlayPanel()
+    {
+        howToPlayPanel.SetActive(false);
+    }
+
     public void ToggleInventoryPanel()
     {
         if (isInventoryVisible)
