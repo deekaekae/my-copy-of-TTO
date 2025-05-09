@@ -32,8 +32,7 @@ public class RewardManager : MonoBehaviour
         Instance = this;
     }
 
-    public void UpdatePlayerRewards()
-    {
+    public void UpdatePlayerRewards(){
         rewardAlreadyGivenThisCoin = true;
 
         currentStreak++;
@@ -41,15 +40,14 @@ public class RewardManager : MonoBehaviour
 
         int before = totalCash;
         totalCash = (int)(MathF.Max(1, totalCash) * multiplier);
-        lastRewardAmount = totalCash - before; // ✅ Store the amount earned this flip
+        lastRewardAmount = totalCash - before; // Store amount earned this flip
 
         uiManager.UpdateRewardUI(true, totalCash, multiplier);
         Debug.Log($"[DEBUG] Updated Player Cash: {totalCash}, Mult: x{multiplier}, Earned: ${lastRewardAmount}");
     }
 
-
-    public void UpdateAIRewards()
-    {
+    //AI not fully implememented
+    public void UpdateAIRewards(){
         aiStreak++;
         aiMultiplier = 1 + (aiStreak / 2);
         int reward = baseCash * aiMultiplier;
@@ -59,34 +57,29 @@ public class RewardManager : MonoBehaviour
         uiManager.UpdateRewardUI(false, aiCash, aiMultiplier);
     }
 
-    public void ResetRewards()
-    {
+    public void ResetRewards(){
         currentStreak = 0;
         multiplier = 1;
         totalCash = 10;
         OnRewardUpdated?.Invoke(totalCash, multiplier);
     }
 
-    public void ResetCoinRewardFlag()
-    {
+    public void ResetCoinRewardFlag(){
         rewardAlreadyGivenThisCoin = false;
     }
 
-    public void OnPlayerMissed()
-    {
-        Debug.Log("[DEBUG] Streak broken. Resetting multiplier and scaling cash loss.");
+    public void OnPlayerMissed(){
+        Debug.Log("Streak broken. Resetting multiplier and scaling cash loss.");
 
         currentStreak = 0;
 
-        // Determine loss % based on multiplier (e.g., 5% per multiplier level)
+        // Determine loss % based on multiplier 
         float lossFactor = 0.05f;  // 5% per x1
         float lossPercent = multiplier * lossFactor;
-        lossPercent = Mathf.Clamp(lossPercent, 0f, 0.9f);  // cap at 90% to avoid total wipe
+        lossPercent = Mathf.Clamp(lossPercent, 0f, 0.9f);  // cap at 90% 
 
         int lostCash = Mathf.FloorToInt(totalCash * lossPercent);
         totalCash -= lostCash;
-
-        Debug.Log($"[DEBUG] Player lost {lossPercent * 100f}% (${lostCash}). New cash: {totalCash}");
 
         multiplier = 1;
         rewardAlreadyGivenThisCoin = true;
@@ -94,8 +87,7 @@ public class RewardManager : MonoBehaviour
         uiManager.UpdateRewardUI(true, totalCash, multiplier);
     }
 
-    public bool SpendCash(int amount)
-    {
+    public bool SpendCash(int amount){
         if (totalCash >= amount)
         {
             totalCash -= amount;
@@ -104,35 +96,29 @@ public class RewardManager : MonoBehaviour
             return true;
         }
 
-        Debug.LogWarning("[RewardManager] Not enough cash to spend.");
+        Debug.LogWarning("Not enough cash to spend.");
         return false;
     }
     
-    public void ApplyMultiplierBonus(int amount)
-    {
+    public void ApplyMultiplierBonus(int amount){
         multiplier += amount;
         Debug.Log($"[RewardManager] Multiplier increased by {amount}. New multiplier: {multiplier}");
             uiManager.UpdateRewardUI(true, totalCash, multiplier);
 
     }
 
-    public void AddCash(int amount)
-    {
-        if (amount <= 0)
-        {
-            Debug.LogWarning($"[RewardManager] Tried to add non-positive cash: {amount}");
+    public void AddCash(int amount){
+        if (amount <= 0){
             return;
         }
 
         totalCash += amount;
-        Debug.Log($"[RewardManager] Gained ${amount}. New total: ${totalCash}");
         uiManager.UpdateRewardUI(true, totalCash, multiplier);
     }
 
     public int GetCurrentCash() => totalCash;
     public int GetMultiplier() => multiplier;
-    public bool CanAfford(int amount)
-    {
+    public bool CanAfford(int amount){
         return totalCash >= amount;
     }
     

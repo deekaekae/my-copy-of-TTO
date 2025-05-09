@@ -18,7 +18,7 @@ public class CameraRigController : MonoBehaviour
     private Camera mainCam;
 
     [Header("Eye Control")]
-    public Transform[] eyeTransforms; // assign both eyes in the inspector
+    public Transform[] eyeTransforms; //for announcer eyes
     public float eyeLookSpeed = 5f;
     public float maxEyeAngle = 30f;
 
@@ -31,23 +31,19 @@ public class CameraRigController : MonoBehaviour
 
     private void Update()
     {
-        if (currentRigPosition != null)
-        {
+        if (currentRigPosition != null){
             transform.position = Vector3.Lerp(transform.position, currentRigPosition.position, Time.deltaTime * moveSpeed);
             transform.rotation = Quaternion.Slerp(transform.rotation, currentRigPosition.rotation, Time.deltaTime * moveSpeed);
         }
 
-        if (mainCam != null && currentLookTarget != null)
-        {
+        if (mainCam != null && currentLookTarget != null){
             Vector3 direction = currentLookTarget.position - mainCam.transform.position;
             Quaternion lookRotation = Quaternion.LookRotation(direction);
             mainCam.transform.rotation = Quaternion.Slerp(mainCam.transform.rotation, lookRotation, Time.deltaTime * lookSpeed);
         }
 
-        if (currentLookTarget != null && eyeTransforms != null)
-        {
-            foreach (var eye in eyeTransforms)
-            {
+        if (currentLookTarget != null && eyeTransforms != null){
+            foreach (var eye in eyeTransforms){
                 if (eye == null) continue;
 
                 Vector3 toTarget = currentLookTarget.position - eye.position;
@@ -73,31 +69,26 @@ public class CameraRigController : MonoBehaviour
 
     }
 
-    public void MoveToAnnouncer()
-    {
+    public void MoveToAnnouncer(){
         currentRigPosition = announcerPosition;
         currentLookTarget = announcerLookTarget;
     }
 
-    public void MoveToPlayer()
-    {
+    public void MoveToPlayer(){
         currentRigPosition = playerPosition;
         currentLookTarget = playerLookTarget;
     }
 
-    public void MoveToAI()
-    {
+    public void MoveToAI(){
         currentRigPosition = aiPosition;
         currentLookTarget = aiLookTarget;
     }
 
-    public void SetPlayerLookTarget(Transform target)
-    {
+    public void SetPlayerLookTarget(Transform target){
         playerLookTarget = target;
     }
 
-    public void SetAILookTarget(Transform target)
-    {
+    public void SetAILookTarget(Transform target){
         aiLookTarget = target;
     }
 

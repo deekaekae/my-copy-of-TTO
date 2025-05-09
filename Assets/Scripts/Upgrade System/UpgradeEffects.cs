@@ -5,11 +5,9 @@ using System.Linq;
     public static class UpgradeEffects
     {
         private static List<Upgrade> queuedOneTimeUpgrades = new();
-        public static void ApplyAllEffects(ref bool expected, int flipIndex)
-        {
+        public static void ApplyAllEffects(ref bool expected, int flipIndex){
             //Apply One-Time Use Upgrades First
-            foreach (var upgrade in queuedOneTimeUpgrades)
-            {
+            foreach (var upgrade in queuedOneTimeUpgrades){
                 switch (upgrade.effectType)
                 {
                     case UpgradeEffectType.Tilt:
@@ -25,22 +23,19 @@ using System.Linq;
                         break;
 
                     case UpgradeEffectType.Sequence:
-                        ApplySequenceEffect(upgrade);
+                        //ApplySequenceEffect(upgrade);
                         break;
                 }
 
                 Debug.Log($"[UpgradeEffects] Applied OTU: {upgrade.upgradeName}");
             }
 
-            if (queuedOneTimeUpgrades.Count > 0)
-            {
-                Debug.Log($"[UpgradeEffects] Cleared {queuedOneTimeUpgrades.Count} OTU upgrades after use.");
+            if (queuedOneTimeUpgrades.Count > 0){
                 queuedOneTimeUpgrades.Clear();
             }
 
             //Apply Passive Upgrades
-            foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades())
-            {
+            foreach (var upgrade in UpgradeManager.Instance.GetPlayerUpgrades()){
                 switch (upgrade.effectType)
                 {
                     case UpgradeEffectType.Tilt:
@@ -56,15 +51,14 @@ using System.Linq;
                         break;
 
                     case UpgradeEffectType.Sequence:
-                        ApplySequenceEffect(upgrade);
+                        //ApplySequenceEffect(upgrade);
                         break;
                 }
             }
         }
     public static List<Upgrade> GetQueuedOTUs() => queuedOneTimeUpgrades;
 
-    private static void ApplyTilt(ref bool expected, Upgrade upgrade, int flipIndex)
-    {
+    private static void ApplyTilt(ref bool expected, Upgrade upgrade, int flipIndex){
         if (upgrade.category != UpgradeCategory.Passive &&
             !queuedOneTimeUpgrades.Contains(upgrade))
             return;
@@ -82,51 +76,39 @@ using System.Linq;
         float chance = upgrade.effectStrength;
         expected = Random.value < Mathf.Clamp01(0.5f + chance) ? expected : !expected;
 
-        Debug.Log($"[UpgradeEffects] Tilt effect applied: {upgrade.upgradeName}");
     }
 
 
-    public static void ApplyRewardEffect(Upgrade upgrade)
-    {
+    public static void ApplyRewardEffect(Upgrade upgrade){
         if (upgrade == null) return;
 
         int currentCash = RewardManager.Instance.GetCurrentCash();
 
-        // Handle multiplier boost (even if not cash-related)
-        if (upgrade.affectsMultiplier)
-        {
+        // Handle multiplier boost
+        if (upgrade.affectsMultiplier){
             int multBoost = Mathf.RoundToInt(upgrade.effectStrength > 0 ? upgrade.effectStrength : 1);
             RewardManager.Instance.ApplyMultiplierBonus(multBoost);
-            Debug.Log($"[UpgradeEffects] +{multBoost} multiplier from upgrade: {upgrade.upgradeName}");
         }
 
         // Flat passive income (passive upgrades only)
-        if (upgrade.affectsCash && upgrade.flatCashAmount > 0 && upgrade.category == UpgradeCategory.Passive)
-        {
-            if (GameManager.Instance.IsPlayerTurn())
-            {
+        if (upgrade.affectsCash && upgrade.flatCashAmount > 0 && upgrade.category == UpgradeCategory.Passive){
+            if (GameManager.Instance.IsPlayerTurn()){
                 RewardManager.Instance.AddCash(upgrade.flatCashAmount);
-                Debug.Log($"[UpgradeEffects] Passive Income: +${upgrade.flatCashAmount}");
             }
         }
 
         // Percent-based success/fail logic
-        if (upgrade.affectsCash && (upgrade.rewardModifiesSuccess || upgrade.rewardModifiesFailure))
-        {
+        if (upgrade.affectsCash && (upgrade.rewardModifiesSuccess || upgrade.rewardModifiesFailure)){
             bool matched = GameManager.Instance.LastFlipMatched();
 
-            if (matched && upgrade.rewardModifiesSuccess)
-            {
+            if (matched && upgrade.rewardModifiesSuccess){
                 int bonus = Mathf.RoundToInt(currentCash * (upgrade.successCashMultiplier - 1f));
                 RewardManager.Instance.AddCash(bonus);
-                Debug.Log($"[UpgradeEffects] Success Reward: +${bonus} from {upgrade.upgradeName}");
             }
 
-            if (!matched && upgrade.rewardModifiesFailure)
-            {
+            if (!matched && upgrade.rewardModifiesFailure){
                 int loss = Mathf.RoundToInt(currentCash * upgrade.failCashPenaltyPercent);
                 RewardManager.Instance.SpendCash(loss);
-                Debug.Log($"[UpgradeEffects] Failure Penalty: -${loss} from {upgrade.upgradeName}");
             }
         }
     }
@@ -134,43 +116,39 @@ using System.Linq;
 
 
 
-    private static void ApplyMercyEffect(Upgrade upgrade)
-    {
+    private static void ApplyMercyEffect(Upgrade upgrade){
         if (upgrade.category != UpgradeCategory.Passive) return;
 
         switch (upgrade.upgradeName)
         {
             case "Extra Attempt":
-                GameManager.Instance.AddExtraAttempt(); // This method must exist in GameManager
-                Debug.Log("[UpgradeEffects] Extra Attempt granted");
+                GameManager.Instance.AddExtraAttempt(); 
+                Debug.Log("Extra Attempt granted");
                 break;
         }
     }
 
+    /*
     private static void ApplySequenceEffect(Upgrade upgrade)
     {
-        Debug.Log($"[UpgradeEffects] Sequence effect triggered for: {upgrade.name}");
+       
     }
+    */
 
-    // Optional for runtime effects
-    public static void ApplyOneTimeUseUpgrade(Upgrade upgrade)
-    {
+    public static void ApplyOneTimeUseUpgrade(Upgrade upgrade){
         queuedOneTimeUpgrades.Add(upgrade);
         Debug.Log($"[UpgradeEffects] One-time upgrade used: {upgrade.name}");
     }
 
 
-    public static float GetChanceToLandHeads()
-    {
+    public static float GetChanceToLandHeads(){
         float baseChance = 50f;
         float modifier = 0f;
 
         var allUpgrades = UpgradeManager.Instance.GetPlayerUpgrades().Concat(queuedOneTimeUpgrades);
 
-        foreach (var upgrade in allUpgrades)
-        {
-            if (upgrade.effectType == UpgradeEffectType.Tilt)
-            {
+        foreach (var upgrade in allUpgrades){
+            if (upgrade.effectType == UpgradeEffectType.Tilt){
                 if (upgrade.affectsHeads)
                     modifier += upgrade.effectStrength * 100f;
                 if (upgrade.affectsTails)
@@ -182,17 +160,14 @@ using System.Linq;
     }
 
 
-    public static float GetChanceToLandTails()
-    {
+    public static float GetChanceToLandTails(){
         float baseChance = 50f;
         float modifier = 0f;
 
         var allUpgrades = UpgradeManager.Instance.GetPlayerUpgrades().Concat(queuedOneTimeUpgrades);
 
-        foreach (var upgrade in allUpgrades)
-        {
-            if (upgrade.effectType == UpgradeEffectType.Tilt)
-            {
+        foreach (var upgrade in allUpgrades){
+            if (upgrade.effectType == UpgradeEffectType.Tilt){
                 if (upgrade.affectsTails)
                     modifier += upgrade.effectStrength * 100f;
                 if (upgrade.affectsHeads)
@@ -206,15 +181,13 @@ using System.Linq;
 
     public static float GetChanceToMatchExpected()
     {
-        float baseChance = 50f; // assuming neutral
+        float baseChance = 50f; // 50/50 base
         float modifier = 0f;
 
         var allUpgrades = UpgradeManager.Instance.GetPlayerUpgrades().Concat(queuedOneTimeUpgrades);
 
-        foreach (var upgrade in allUpgrades)
-        {
-            if (upgrade.effectType == UpgradeEffectType.Tilt && upgrade.affectsMatchExpected)
-            {
+        foreach (var upgrade in allUpgrades){
+            if (upgrade.effectType == UpgradeEffectType.Tilt && upgrade.affectsMatchExpected){
                 modifier += upgrade.effectStrength * 100f;
             }
         }
@@ -222,10 +195,9 @@ using System.Linq;
         return Mathf.Clamp(baseChance + modifier, 0f, 100f);
     }
 
-    public static void ClearQueuedOneTimeUpgrades()
-    {
+    public static void ClearQueuedOneTimeUpgrades(){
         queuedOneTimeUpgrades.Clear();
-        Debug.Log("[UpgradeEffects] Cleared queued OTU upgrades.");
+        Debug.Log(" Cleared queued OTU upgrades.");
     }
 
 }

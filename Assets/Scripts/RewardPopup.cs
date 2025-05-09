@@ -13,8 +13,6 @@ public class RewardPopup : MonoBehaviour
     {
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
-            Debug.LogWarning("CanvasGroup missing on RewardPopup!");
-
         Destroy(gameObject, lifetime);
     }
 
@@ -26,11 +24,10 @@ public class RewardPopup : MonoBehaviour
             canvasGroup.alpha -= Time.deltaTime / lifetime;
     }
 
-    public void SetText(string message)
-    {
+    public void SetText(string message){
         if (popupText != null)
             popupText.text = message;
         else
-            Debug.LogWarning("PopupText is null!");
+            Debug.LogWarning("PopupText is null");
     }
 }

@@ -31,37 +31,27 @@ public class UpgradeManager : MonoBehaviour
         return availableUpgrades;
     }
 
-    public int GetUpgradeCount(string upgradeName)
-    {
+    public int GetUpgradeCount(string upgradeName){
         int count = 0;
-        foreach (var upgrade in playerUpgrades)
-        {
+        foreach (var upgrade in playerUpgrades){
             if (upgrade.upgradeName == upgradeName)
                 count++;
         }
-        foreach (var upgrade in oneTimeUseUpgrades)
-        {
+        foreach (var upgrade in oneTimeUseUpgrades){
             if (upgrade.upgradeName == upgradeName)
                 count++;
         }
         return count;
     }
 
-
-
-
-    public bool TryPurchaseUpgrade(Upgrade upgrade)
-    {
-        if (RewardManager.Instance.GetCurrentCash() >= upgrade.cost)
-        {
+    public bool TryPurchaseUpgrade(Upgrade upgrade){
+        if (RewardManager.Instance.GetCurrentCash() >= upgrade.cost){
             RewardManager.Instance.SpendCash(upgrade.cost);
 
-            if (upgrade.category == UpgradeCategory.OneTimeUse)
-            {
+            if (upgrade.category == UpgradeCategory.OneTimeUse){
                 oneTimeUseUpgrades.Add(upgrade);
             }
-            else
-            {
+            else{
                 playerUpgrades.Add(upgrade);
             }
 
@@ -73,10 +63,8 @@ public class UpgradeManager : MonoBehaviour
     }
 
 
-    public bool HasUpgradeNamed(string upgradeName)
-    {
-        foreach (var upgrade in GetPlayerUpgrades())
-        {
+    public bool HasUpgradeNamed(string upgradeName){
+        foreach (var upgrade in GetPlayerUpgrades()){
             if (upgrade.upgradeName == upgradeName)
                 return true;
         }
@@ -84,12 +72,9 @@ public class UpgradeManager : MonoBehaviour
     }
 
 
-    public void UseOneTimeUpgrade(string upgradeName)
-    {
-        for (int i = 0; i < oneTimeUseUpgrades.Count; i++)
-        {
-            if (oneTimeUseUpgrades[i].upgradeName == upgradeName)
-            {
+    public void UseOneTimeUpgrade(string upgradeName){
+        for (int i = 0; i < oneTimeUseUpgrades.Count; i++){
+            if (oneTimeUseUpgrades[i].upgradeName == upgradeName){
                 Debug.Log($"Used one-time upgrade: {upgradeName}");
                 oneTimeUseUpgrades.RemoveAt(i);
                 return;
@@ -98,12 +83,10 @@ public class UpgradeManager : MonoBehaviour
     }
 
 
-    public List<Upgrade> GetPlayerUpgrades()
-    {
+    public List<Upgrade> GetPlayerUpgrades(){
         return playerUpgrades;
     }
-    public List<Upgrade> GetOneTimeUseUpgrades()
-    {
+    public List<Upgrade> GetOneTimeUseUpgrades(){
         return oneTimeUseUpgrades;
     }
 

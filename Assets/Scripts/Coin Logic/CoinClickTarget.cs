@@ -4,8 +4,7 @@ public class CoinClickTarget : MonoBehaviour
 {
     public bool isActive = false;
 
-    public void SetActive(bool state)
-    {
+    public void SetActive(bool state){
         isActive = state;
 
         // Optional: Visual feedback

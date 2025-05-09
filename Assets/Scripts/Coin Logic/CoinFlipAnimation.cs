@@ -27,10 +27,8 @@ public class CoinFlip : MonoBehaviour
 
     void Update()
     {
-        if (flip)
-        {
-            if (!hasFlipped)
-            {
+        if (flip){
+            if (!hasFlipped){
                 verticalVelocity = baseVerticalVelocity;
                 hasFlipped = true;
             }
@@ -60,8 +58,7 @@ public class CoinFlip : MonoBehaviour
             verticalVelocity += gravity * Time.deltaTime;
 
             // Landing check
-            if (transform.position.y <= startPos.y)
-            {
+            if (transform.position.y <= startPos.y){
                 transform.position = startPos;
                 flip = false;
                 verticalVelocity = 0f;
